@@ -24,6 +24,7 @@ class Page(HTMLParser):
         if tag in ("a", "link", "script"):
             url = values.get("href") or values.get("src") or ""
             if url.startswith("./"):
+                assert url != "./", "directory link opens a file listing in local preview"
                 self.links.append(url.split("#", 1)[0])
         if tag == "h1":
             self.headings.append("h1")
