@@ -1,6 +1,6 @@
 # 公開前の確認
 
-このサイトは現在、ローカルだけにあります。リモートリポジトリは設定していません。初期公開は github.io URL・無広告で行い、独自ドメインは調査後に判断します。
+初期公開は GitHub Pages の github.io URL・無広告で行い、独自ドメインは調査後に判断します。公開先は `https://yuchans-yoisho.github.io/web_tool_lab/` です。
 
 ## 1. 画面と動作を確認
 
