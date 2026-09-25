@@ -14,6 +14,16 @@
     return values[0] % max;
   }
 
+  function randomRouletteEffect() {
+    const roll = randomInt(100);
+    if (roll < 50) return -1; // 通常回転 50%
+    if (roll < 62) return 0;  // ひとつ進む 12%
+    if (roll < 74) return 1;  // 逆回転 12%
+    if (roll < 86) return 2;  // マスの入れ替わり 12%
+    if (roll < 88) return 3;  // 派手な結果表示 2%
+    return 4;                 // 揺れ戻し 12%
+  }
+
   function lines(value, max) {
     const items = value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
     if (items.length < 2 || items.length > max) throw new Error("2〜" + max + "件を入力してください。");
@@ -80,7 +90,7 @@
       showError("roulette-error", "");
       const choice = randomInt(items.length);
       const motion = $("roulette-motion").checked;
-      const effect = motion && $("roulette-effects").checked ? randomInt(5) : -1;
+      const effect = motion && $("roulette-effects").checked ? randomRouletteEffect() : -1;
       const wheel = $("wheel");
       const burst = $("roulette-burst");
       wheel.style.visibility = "";

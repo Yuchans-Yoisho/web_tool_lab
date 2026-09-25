@@ -44,7 +44,7 @@ get("roulette-effects").checked = true;
 const events = [];
 const frames = [];
 const timers = [];
-const randomValues = [0, 0]; // 最初の抽選は候補0、演出は「最後にひとつ進む」
+const randomValues = [0, 50]; // 最初の抽選は候補0、演出は「最後にひとつ進む」
 const context = {
   document: { getElementById: get, createElement: () => new FakeElement(), createElementNS: () => new FakeElement() },
   crypto: { getRandomValues: (values) => { values[0] = randomValues.shift() ?? 0; return values; } },
@@ -82,7 +82,7 @@ assert.ok(get("wheel").children.length > 0);
 get("roulette-items").value = "A\nB\nC";
 for (let effect = 1; effect < 5; effect++) {
   randomValues.length = 0;
-  randomValues.push(0, effect, 0);
+  randomValues.push(0, [62, 74, 86, 88][effect - 1], 0);
   get("roulette-run").click();
   for (let steps = 0; get("roulette-run").disabled && steps < 15; steps++) advanceAnimation();
   assert.equal(get("roulette-run").disabled, false, "effect " + effect + " finishes");
@@ -98,6 +98,12 @@ for (let effect = 1; effect < 5; effect++) {
     assert.ok(Math.abs(((angle % 360) + 360) % 360 - 300) < 0.001);
   }
 }
+randomValues.length = 0;
+randomValues.push(0, 49);
+get("roulette-run").click();
+advanceAnimation();
+assert.equal(get("roulette-result").textContent, "A", "49以下は演出なしで完了する");
+assert.equal(get("roulette-burst").hidden, true);
 get("roulette-effects").checked = false;
 get("roulette-run").click();
 while (get("roulette-run").disabled) advanceAnimation();
