@@ -57,7 +57,10 @@
   let wheelRotation = 0;
   let spinning = false;
   const rouletteButton = $("roulette-run");
-  if (rouletteButton) renderWheel(lines($("roulette-items").value, 20));
+  if (rouletteButton) {
+    renderWheel(lines($("roulette-items").value, 20));
+    $("roulette-motion-note").hidden = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
   rouletteButton?.addEventListener("click", () => {
     if (spinning) return;
     try {

@@ -42,6 +42,7 @@ const context = {
 };
 vm.runInNewContext(fs.readFileSync("assets/app.js", "utf8"), context);
 assert.ok(get("wheel").children.length > 0, "wheel is visible before first click");
+assert.equal(get("roulette-motion-note").hidden, true);
 
 get("roulette-items").value = "<img src=x onerror=alert(1)>\n安全";
 get("roulette-run").click();
