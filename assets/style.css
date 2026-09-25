@@ -19,6 +19,7 @@
 .burst-layer.active .burst-flash{animation:burst-rays 1.8s ease-out forwards}
 .burst-reveal{position:absolute;inset:0;z-index:2;display:grid;place-items:center;padding:24px;border-radius:50%;background:radial-gradient(circle,#fff9d2 0%,#ffc36f 38%,#f1745c 68%,transparent 74%);font-size:clamp(1.5rem,5vw,2.8rem);font-weight:900;color:#6e2219;line-height:1.15;text-align:center;overflow-wrap:anywhere;text-shadow:0 2px 0 #fff3c9,0 5px 18px #6e221966}
 .burst-layer.active .burst-reveal{animation:burst-pop .8s cubic-bezier(.16,1.4,.3,1) both}
+.roulette-mobile-run{display:none}
 @keyframes burst-left{to{transform:translateX(-70%) rotate(-15deg);opacity:.1}}
 @keyframes burst-right{to{transform:translateX(70%) rotate(15deg);opacity:.1}}
 @keyframes burst-rays{0%{opacity:0;transform:scale(.3) rotate(0)}35%{opacity:1}100%{opacity:.28;transform:scale(1.5) rotate(35deg)}}
@@ -105,6 +106,14 @@
   #roulette .wheel-wrap{width:min(70vw,280px,36dvh)}
   #roulette .result-label{margin-top:3px}
   #roulette .result{margin:2px 0;font-size:1.35rem}
+  #roulette #roulette-run{display:none}
+  #roulette .roulette-mobile-run{display:block;align-self:stretch;margin-top:8px}
+  #amidaku{display:flex;flex-direction:column}
+  #amidaku .amidaku-board{order:1;margin-top:0;margin-bottom:12px}
+  #amidaku .amidaku-controls{order:2}
+  #amidaku .guide{order:3}
+  #dice .workspace{display:flex;flex-direction:column;gap:12px}
+  #dice .workspace>.result-panel{order:-1}
 }
 
 @media(min-width:900px){

@@ -125,6 +125,13 @@ get("roulette-effects").checked = true;
 get("roulette-run").click();
 assert.equal(get("wheel").style.transition, "none");
 assert.ok(["A", "B"].includes(get("roulette-result").textContent));
+get("roulette-motion").checked = true;
+get("roulette-effects").checked = false;
+get("roulette-run-mobile").click();
+assert.equal(get("roulette-run").disabled, true);
+assert.equal(get("roulette-run-mobile").disabled, true);
+while (get("roulette-run").disabled) advanceAnimation();
+assert.equal(get("roulette-run-mobile").disabled, false);
 
 assert.equal(get("ladder").children.filter((x) => x.attributes.class === "ladder-line").length, 3, "three lines appear on load");
 assert.equal(get("amidaku-name-slots").children.length, 3);

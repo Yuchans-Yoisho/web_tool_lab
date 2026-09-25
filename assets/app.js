@@ -38,6 +38,9 @@
   }
 
   function showError(id, message) { $(id).textContent = message; }
+  function showOnMobile(id) {
+    if (window.innerWidth <= 760) $(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
   function renderWheel(items) {
     const wheel = $("wheel");
@@ -77,13 +80,14 @@
   let wheelRotation = 0;
   let spinning = false;
   const rouletteButton = $("roulette-run");
+  const rouletteButtons = [rouletteButton, $("roulette-run-mobile")].filter(Boolean);
   if (rouletteButton) {
     renderWheel(lines($("roulette-items").value, 20));
     const motion = $("roulette-motion");
     const effects = $("roulette-effects");
     motion.addEventListener("change", () => { effects.disabled = !motion.checked; });
   }
-  rouletteButton?.addEventListener("click", () => {
+  const runRoulette = () => {
     if (spinning) return;
     try {
       const items = lines($("roulette-items").value, 20);
@@ -91,7 +95,7 @@
       const choice = randomInt(items.length);
       const motion = $("roulette-motion").checked;
       const effect = motion && $("roulette-effects").checked ? randomRouletteEffect() : -1;
-      if (window.innerWidth <= 760) $("wheel-wrap").scrollIntoView({ behavior: "smooth", block: "center" });
+      showOnMobile("wheel-wrap");
       const wheel = $("wheel");
       const burst = $("roulette-burst");
       wheel.style.visibility = "";
@@ -101,7 +105,7 @@
       $("burst-right").replaceChildren();
       renderWheel(items);
       spinning = true;
-      rouletteButton.disabled = true;
+      rouletteButtons.forEach((button) => { button.disabled = true; });
       $("roulette-result").textContent = "回転中…";
       const sector = 360 / items.length;
       const nextPaint = (callback) => window.requestAnimationFrame(() => window.requestAnimationFrame(callback));
@@ -124,7 +128,7 @@
       };
       const finish = () => {
         $("roulette-result").textContent = items[choice];
-        rouletteButton.disabled = false;
+        rouletteButtons.forEach((button) => { button.disabled = false; });
         spinning = false;
       };
       if (!motion) {
@@ -192,8 +196,12 @@
         spinTo(choice, 3300, "cubic-bezier(.12,.72,.18,1)", finish);
       }
       window.trackToolEvent("roulette", "generate");
-    } catch (error) { showError("roulette-error", error.message); }
-  });
+    } catch (error) {
+      showError("roulette-error", error.message);
+      showOnMobile("roulette-error");
+    }
+  };
+  rouletteButtons.forEach((button) => button.addEventListener("click", runRoulette));
 
   const ladderState = {
     count: 3,
@@ -418,6 +426,7 @@
 
   $("amidaku-build")?.addEventListener("click", () => {
     if (!ladderReady() || ladderState.rungs) return;
+    showOnMobile("amidaku-board");
     ladderState.rungs = buildRungs(ladderState.count);
     drawLadder();
     updateLadderControls();
@@ -427,6 +436,7 @@
 
   $("amidaku-reveal")?.addEventListener("click", () => {
     if (!ladderState.rungs || ladderState.revealed) return;
+    showOnMobile("amidaku-board");
     ladderState.revealed = true;
     $("amidaku-reveal").disabled = true;
     $("ladder-cover").classList.add("opening");
@@ -548,6 +558,7 @@
     if (!settings) { previewDice(); return; }
     const rolls = Array.from({ length: settings.count }, () => diceValue(settings));
     const dice = renderDice(settings, true);
+    showOnMobile("dice-faces");
     diceRolling = true;
     $("dice-roll").disabled = true;
     $("dice-count").disabled = true;
