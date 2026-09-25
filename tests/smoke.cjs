@@ -10,12 +10,26 @@ class FakeElement {
     this.children = [];
     this.attributes = {};
     this.handlers = {};
+    this.classes = new Set();
+    this.classList = {
+      add: (name) => this.classes.add(name),
+      remove: (name) => this.classes.delete(name)
+    };
   }
   addEventListener(name, handler) { this.handlers[name] = handler; }
   click() { assert.ok(this.handlers.click, "click handler"); this.handlers.click(); }
   replaceChildren() { this.children = []; }
   append(child) { this.children.push(child); }
   setAttribute(name, value) { this.attributes[name] = value; }
+  removeAttribute(name) { delete this.attributes[name]; }
+  cloneNode(deep) {
+    const copy = new FakeElement();
+    copy.textContent = this.textContent;
+    copy.style = { ...this.style };
+    copy.attributes = { ...this.attributes };
+    if (deep) copy.children = this.children.map((child) => child.cloneNode(true));
+    return copy;
+  }
 }
 
 const ids = new Map();
@@ -26,10 +40,11 @@ const get = (id) => {
 for (const id of ["roulette-run", "amidaku-build", "dice-roll"]) get(id);
 get("roulette-items").value = "映画\n散歩";
 get("roulette-motion").checked = true;
+get("roulette-effects").checked = true;
 const events = [];
 const frames = [];
 const timers = [];
-const randomValues = [0, 1]; // 最初の抽選は候補0、演出はフェイントあり
+const randomValues = [0, 0]; // 最初の抽選は候補0、演出は「最後にひとつ進む」
 const context = {
   document: { getElementById: get, createElement: () => new FakeElement(), createElementNS: () => new FakeElement() },
   crypto: { getRandomValues: (values) => { values[0] = randomValues.shift() ?? 0; return values; } },
@@ -44,35 +59,55 @@ const context = {
 vm.runInNewContext(fs.readFileSync("assets/app.js", "utf8"), context);
 assert.ok(get("wheel").children.length > 0, "wheel is visible before first click");
 
+function advanceAnimation() {
+  while (frames.length) frames.shift()();
+  assert.ok(timers.length, "animation has a pending step");
+  timers.shift()();
+}
+
 get("roulette-items").value = "<img src=x onerror=alert(1)>\n安全";
 get("roulette-run").click();
 assert.equal(get("roulette-result").textContent, "回転中…");
 assert.equal(get("roulette-run").disabled, true);
-while (frames.length) frames.shift()();
+advanceAnimation();
+assert.equal(get("roulette-result").textContent, "止まった…？");
+advanceAnimation();
+assert.equal(get("roulette-result").textContent, "もうひとつ！");
+advanceAnimation();
 assert.match(get("wheel").style.transform, /^rotate\(\d+deg\)$/);
-assert.equal(timers.length, 1);
-timers.shift()();
-assert.equal(get("roulette-result").textContent, "止まりそう…？");
-timers.shift()();
-assert.equal(get("roulette-result").textContent, "まだ回る！");
-while (frames.length) frames.shift()();
-assert.equal(timers.length, 1);
-timers.shift()();
 assert.ok(["<img src=x onerror=alert(1)>", "安全"].includes(get("roulette-result").textContent));
 assert.equal(get("roulette-run").disabled, false);
 assert.equal(get("roulette-error").textContent, "");
 assert.ok(get("wheel").children.length > 0);
-get("roulette-items").value = "A\nB";
-randomValues.push(0, 0); // 候補0、フェイントなし
+get("roulette-items").value = "A\nB\nC";
+for (let effect = 1; effect < 5; effect++) {
+  randomValues.length = 0;
+  randomValues.push(0, effect, 0);
+  get("roulette-run").click();
+  for (let steps = 0; get("roulette-run").disabled && steps < 15; steps++) advanceAnimation();
+  assert.equal(get("roulette-run").disabled, false, "effect " + effect + " finishes");
+  assert.equal(get("roulette-result").textContent, "A", "effect " + effect + " keeps the selected result");
+  if (effect === 2) assert.equal(get("wheel").children[1].children[1].textContent, "A");
+  if (effect === 3) {
+    assert.equal(get("roulette-burst").hidden, false);
+    assert.equal(get("burst-left").children.length, 1);
+    assert.notEqual(get("burst-left").children[0].style.visibility, "hidden");
+  }
+  if (effect === 1 || effect === 4) {
+    const angle = Number(get("wheel").style.transform.match(/rotate\(([-\d.]+)deg\)/)[1]);
+    assert.ok(Math.abs(((angle % 360) + 360) % 360 - 300) < 0.001);
+  }
+}
+get("roulette-effects").checked = false;
 get("roulette-run").click();
-while (frames.length) frames.shift()();
-timers.shift()();
+while (get("roulette-run").disabled) advanceAnimation();
 assert.equal(get("roulette-result").textContent, "A");
 get("roulette-items").value = "ひとつだけ";
 get("roulette-run").click();
 assert.match(get("roulette-error").textContent, /2〜20件/);
 get("roulette-items").value = "A\nB";
 get("roulette-motion").checked = false;
+get("roulette-effects").checked = true;
 get("roulette-run").click();
 assert.equal(get("wheel").style.transition, "none");
 assert.ok(["A", "B"].includes(get("roulette-result").textContent));

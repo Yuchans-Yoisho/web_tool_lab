@@ -4,6 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const svgNS = "http://www.w3.org/2000/svg";
   const colors = ["#f7a46b", "#a8d9ce", "#a9bff1", "#f3cce0", "#ead28a", "#bdc9a7", "#b9a6e3", "#eaa9a0"];
+  let wheelSegments = [];
 
   function randomInt(max) {
     if (!Number.isSafeInteger(max) || max < 1 || max > 0xffffffff) throw new RangeError("Invalid random range");
@@ -31,8 +32,10 @@
   function renderWheel(items) {
     const wheel = $("wheel");
     wheel.replaceChildren();
+    wheelSegments = [];
     const radius = 148;
     items.forEach((item, index) => {
+      const group = element("g", { class: "wheel-sector" });
       const start = -Math.PI / 2 + 2 * Math.PI * index / items.length;
       const end = -Math.PI / 2 + 2 * Math.PI * (index + 1) / items.length;
       const x1 = 160 + radius * Math.cos(start), y1 = 160 + radius * Math.sin(start);
@@ -41,17 +44,24 @@
         d: "M 160 160 L " + x1 + " " + y1 + " A " + radius + " " + radius + " 0 " + (items.length === 2 ? 0 : (end - start > Math.PI ? 1 : 0)) + " 1 " + x2 + " " + y2 + " Z",
         fill: colors[index % colors.length], stroke: "#fffaf2", "stroke-width": 2
       });
-      wheel.append(path);
+      group.append(path);
       const mid = (start + end) / 2;
       const text = element("text", {
         x: 160 + 88 * Math.cos(mid), y: 160 + 88 * Math.sin(mid),
         "text-anchor": "middle", "dominant-baseline": "middle", "font-size": items.length > 12 ? 11 : 13,
         fill: "#27313a"
       });
-      text.textContent = Array.from(item).slice(0, 8).join("") + (Array.from(item).length > 8 ? "…" : "");
-      wheel.append(text);
+      text.textContent = shortLabel(item, 8);
+      group.append(text);
+      wheel.append(group);
+      wheelSegments.push({ group, path, text, color: colors[index % colors.length] });
     });
     wheel.append(element("circle", { cx: 160, cy: 160, r: 15, fill: "#263a4a" }));
+  }
+
+  function shortLabel(value, length) {
+    const chars = Array.from(value);
+    return chars.slice(0, length).join("") + (chars.length > length ? "…" : "");
   }
 
   let wheelRotation = 0;
@@ -59,6 +69,9 @@
   const rouletteButton = $("roulette-run");
   if (rouletteButton) {
     renderWheel(lines($("roulette-items").value, 20));
+    const motion = $("roulette-motion");
+    const effects = $("roulette-effects");
+    motion.addEventListener("change", () => { effects.disabled = !motion.checked; });
   }
   rouletteButton?.addEventListener("click", () => {
     if (spinning) return;
@@ -66,53 +79,106 @@
       const items = lines($("roulette-items").value, 20);
       showError("roulette-error", "");
       const choice = randomInt(items.length);
+      const motion = $("roulette-motion").checked;
+      const effect = motion && $("roulette-effects").checked ? randomInt(5) : -1;
+      const wheel = $("wheel");
+      const burst = $("roulette-burst");
+      wheel.style.visibility = "";
+      burst.hidden = true;
+      burst.classList.remove("active");
+      $("burst-left").replaceChildren();
+      $("burst-right").replaceChildren();
       renderWheel(items);
-      // 約2/3回は隣の候補で一度止まりそうになり、最後に一コマ進む。
-      // 抽選したchoiceは演出より先に決めるので、当選確率には影響しない。
-      const animate = $("roulette-motion").checked;
-      const fakeStop = animate && randomInt(3) !== 0;
-      const firstChoice = fakeStop ? (choice + 1) % items.length : choice;
-      const center = 360 * (firstChoice + 0.5) / items.length;
-      const target = (360 - center) % 360;
-      const current = ((wheelRotation % 360) + 360) % 360;
-      const firstRotation = wheelRotation + 1440 + ((target - current + 360) % 360);
-      const finalRotation = firstRotation + (fakeStop ? 360 / items.length : 0);
-      wheelRotation = finalRotation;
       spinning = true;
       rouletteButton.disabled = true;
       $("roulette-result").textContent = "回転中…";
-      const wheel = $("wheel");
-      const showResult = () => {
+      const sector = 360 / items.length;
+      const nextPaint = (callback) => window.requestAnimationFrame(() => window.requestAnimationFrame(callback));
+      const moveTo = (angle, duration, easing, done) => {
+        wheel.style.transition = "transform " + duration + "ms " + easing;
+        nextPaint(() => {
+          wheel.style.transform = "rotate(" + angle + "deg)";
+          window.setTimeout(done, duration);
+        });
+      };
+      const spinTo = (index, duration, easing, done) => {
+        const target = (360 - sector * (index + .5)) % 360;
+        const current = ((wheelRotation % 360) + 360) % 360;
+        wheelRotation += 1440 + ((target - current + 360) % 360);
+        moveTo(wheelRotation, duration, easing, done);
+      };
+      const moveBy = (degrees, duration, easing, done) => {
+        wheelRotation += degrees;
+        moveTo(wheelRotation, duration, easing, done);
+      };
+      const finish = () => {
         $("roulette-result").textContent = items[choice];
         rouletteButton.disabled = false;
         spinning = false;
       };
-      if (!animate) {
+      if (!motion) {
+        const target = (360 - sector * (choice + .5)) % 360;
+        const current = ((wheelRotation % 360) + 360) % 360;
+        wheelRotation += (target - current + 360) % 360;
         wheel.style.transition = "none";
-        wheel.style.transform = "rotate(" + finalRotation + "deg)";
-        showResult();
-      } else {
-        const nextPaint = (callback) => window.requestAnimationFrame(() => window.requestAnimationFrame(callback));
-        const firstDuration = fakeStop ? 2600 : 3400;
-        wheel.style.transition = "transform " + firstDuration + "ms cubic-bezier(.12,.72,.18,1)";
-        nextPaint(() => {
-          wheel.style.transform = "rotate(" + firstRotation + "deg)";
+        wheel.style.transform = "rotate(" + wheelRotation + "deg)";
+        finish();
+      } else if (effect === 0) {
+        spinTo((choice + 1) % items.length, 2500, "cubic-bezier(.12,.72,.18,1)", () => {
+          $("roulette-result").textContent = "止まった…？";
           window.setTimeout(() => {
-            if (!fakeStop) {
-              showResult();
-              return;
-            }
-            $("roulette-result").textContent = "止まりそう…？";
-            window.setTimeout(() => {
-              $("roulette-result").textContent = "まだ回る！";
-              wheel.style.transition = "transform 850ms cubic-bezier(.3,0,.2,1)";
-              nextPaint(() => {
-                wheel.style.transform = "rotate(" + finalRotation + "deg)";
-                window.setTimeout(showResult, 850);
-              });
-            }, 420);
-          }, firstDuration);
+            $("roulette-result").textContent = "もうひとつ！";
+            moveBy(sector, 750, "cubic-bezier(.2,.75,.3,1)", finish);
+          }, 360);
         });
+      } else if (effect === 1) {
+        spinTo((choice - 1 + items.length) % items.length, 2600, "cubic-bezier(.12,.72,.18,1)", () => {
+          $("roulette-result").textContent = "止まった…？";
+          window.setTimeout(() => {
+            $("roulette-result").textContent = "逆回転！";
+            moveBy(-360 - sector, 800, "cubic-bezier(.25,.7,.4,1)", finish);
+          }, 350);
+        });
+      } else if (effect === 2) {
+        const decoy = (choice + 1 + randomInt(items.length - 1)) % items.length;
+        spinTo(decoy, 3000, "cubic-bezier(.12,.72,.18,1)", () => {
+          $("roulette-result").textContent = "入れ替わる…";
+          const a = wheelSegments[decoy], b = wheelSegments[choice];
+          a.group.style.opacity = b.group.style.opacity = "0.15";
+          window.setTimeout(() => {
+            [a.text.textContent, b.text.textContent] = [b.text.textContent, a.text.textContent];
+            [a.color, b.color] = [b.color, a.color];
+            a.path.setAttribute("fill", a.color);
+            b.path.setAttribute("fill", b.color);
+            a.group.style.opacity = b.group.style.opacity = "1";
+            window.setTimeout(finish, 600);
+          }, 600);
+        });
+      } else if (effect === 3) {
+        wheelRotation += 2160 + randomInt(items.length) * sector;
+        moveTo(wheelRotation, 3000, "cubic-bezier(.65,0,.95,.5)", () => {
+          const left = wheel.cloneNode(true), right = wheel.cloneNode(true);
+          left.removeAttribute("id");
+          right.removeAttribute("id");
+          left.style.transform = right.style.transform = wheel.style.transform;
+          $("burst-left").append(left);
+          $("burst-right").append(right);
+          wheel.style.visibility = "hidden";
+          $("burst-result").textContent = shortLabel(items[choice], 12);
+          burst.hidden = false;
+          burst.classList.add("active");
+          $("roulette-result").textContent = "大当たり！";
+          window.setTimeout(finish, 1800);
+        });
+      } else if (effect === 4) {
+        spinTo(choice, 2600, "cubic-bezier(.12,.72,.18,1)", () => {
+          $("roulette-result").textContent = "決まる…？";
+          moveBy(sector * .4, 280, "ease-out", () =>
+            moveBy(-sector * .65, 270, "ease-in-out", () =>
+              moveBy(sector * .25, 210, "ease-out", finish)));
+        });
+      } else {
+        spinTo(choice, 3300, "cubic-bezier(.12,.72,.18,1)", finish);
       }
       window.trackToolEvent("roulette", "generate");
     } catch (error) { showError("roulette-error", error.message); }
