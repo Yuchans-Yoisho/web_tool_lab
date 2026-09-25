@@ -34,6 +34,9 @@
 .ladder-actions button:disabled{opacity:.48;cursor:not-allowed}
 .amidaku-board{margin-top:18px;text-align:center;overflow:hidden}
 .amidaku-board>.hint:first-child{margin:0 0 10px}
+.amidaku-summary>.hint{margin:4px 0}
+.amidaku-summary>button{border:0;border-radius:10px;background:#263a4a;color:white;padding:8px 16px;font-weight:800;min-height:38px;margin-top:6px}
+.amidaku-summary>button:hover{background:#165c76}
 .ladder-row-label{font-size:.88rem;font-weight:850;margin:12px 0 4px}
 .ladder-slots{display:grid;width:100%;min-width:0}
 .ladder-slot{min-width:0;padding:0 3px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:8px}
@@ -50,3 +53,48 @@
 .ladder-cover span{padding:12px 18px;border-radius:999px;background:#fffefb;color:#263a4a;font-weight:850;box-shadow:0 3px 12px #263a4a22}
 .ladder-cover.opening{clip-path:inset(100% 0 0 0);opacity:0}
 @media(max-width:760px){.workspace{grid-template-columns:minmax(0,1fr)}.amidaku-board{padding:14px}.ladder-slot{padding:0 1px}.ladder-slot input{padding:2px;font-size:.7rem}.ladder-cover span{font-size:.85rem;padding:8px 10px}}
+
+@media(min-width:900px){
+  .tool-page .site-header{min-height:50px;padding:6px 24px}
+  .tool-page .back{display:none}
+  .tool-page .single-tool .tool-section{padding:0 24px 6px}
+  .tool-page .section-heading{display:flex;align-items:baseline;gap:10px;text-align:left;margin:0 0 8px}
+  .tool-page .section-heading .eyebrow{font-size:.68rem}
+  .tool-page .section-heading h1{font-size:1.65rem;line-height:1.3;margin:0;white-space:nowrap}
+  .tool-page .section-heading p{font-size:.85rem}
+  .tool-page .guide{max-width:none;margin:5px 0 0;display:grid;grid-template-columns:auto 1fr 1fr;align-items:start;gap:10px;font-size:.74rem;line-height:1.3}
+  .tool-page .guide h2{font-size:.9rem;margin:0;white-space:nowrap}
+  .tool-page .guide p{margin:0}
+  .tool-page footer{padding:4px 24px 6px;font-size:.78rem}
+  #roulette .workspace{gap:16px}
+  #roulette .panel{padding:16px 20px}
+  #roulette .panel textarea{height:clamp(145px,22dvh,190px)}
+  #roulette .panel>button{min-height:42px;margin-top:8px;padding:8px 18px}
+  #roulette .hint{font-size:.74rem;line-height:1.4;margin:5px 0}
+  #roulette .motion-control{margin-top:6px;margin-bottom:0;line-height:1.3;font-size:.82rem}
+  #roulette .error{min-height:0;margin:0}
+  #roulette .wheel-wrap{width:min(100%,310px,40dvh)}
+  #roulette .result-label{margin-top:4px}
+  #roulette .result{margin:0;font-size:1.45rem}
+  #amidaku .amidaku-controls{padding:9px 16px;gap:8px 16px}
+  #amidaku .amidaku-controls>div:first-child{display:flex;align-items:center;gap:8px}
+  #amidaku .amidaku-controls label{font-size:.8rem;margin:0;white-space:nowrap;flex:none}
+  #amidaku .amidaku-controls select{padding:6px 10px;line-height:1.2}
+  #amidaku .ladder-actions button{min-height:38px;padding:7px 14px}
+  #amidaku .amidaku-board{margin-top:8px;padding:8px 16px 6px}
+  #amidaku .amidaku-board>.hint:first-child{margin:0;font-size:.74rem;line-height:1.3}
+  #amidaku .ladder-row-label{margin:2px 0;font-size:.8rem;line-height:1.2}
+  #amidaku .ladder-slot{gap:2px}
+  #amidaku .ladder-slot input{height:30px}
+  #amidaku .ladder-drag{min-height:22px}
+  #amidaku .ladder-center{height:clamp(160px,calc(100vh - 565px),340px);height:clamp(160px,calc(100dvh - 565px),340px);margin:1px 0}
+  #amidaku .ladder-cover{top:18px;bottom:18px}
+  #amidaku .choice-buttons{margin:3px 0;gap:4px}
+  #amidaku .choice-button{padding:3px 9px;font-size:.8rem}
+  #amidaku .result{font-size:1rem;line-height:1.3;margin:2px 0}
+  #amidaku .amidaku-summary>.hint{font-size:.74rem;line-height:1.3;margin:3px 0}
+  #amidaku .amidaku-summary>button{min-height:32px;margin-top:4px;padding:5px 14px;font-size:.8rem}
+  #amidaku .amidaku-board.has-results .amidaku-summary{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;min-height:32px}
+  #amidaku .amidaku-board.has-results .amidaku-summary>.hint{display:none}
+  #amidaku .amidaku-board.has-results .choice-buttons,#amidaku .amidaku-board.has-results .result,#amidaku .amidaku-board.has-results .amidaku-summary>button{margin:0}
+}

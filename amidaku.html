@@ -11,7 +11,7 @@
   <script defer src="./assets/analytics.js"></script>
   <script defer src="./assets/app.js"></script>
 </head>
-<body>
+<body class="tool-page">
   <header class="site-header"><a class="brand" href="./">ちょい決めツール</a><nav aria-label="ツール"><a href="./roulette.html">ルーレット</a><a href="./amidaku.html">あみだくじ</a><a href="./dice.html">サイコロ</a></nav></header>
   <main class="single-tool">
     <p class="back"><a href="./">← ツール一覧</a></p>
@@ -22,17 +22,14 @@
         <div class="ladder-actions"><button id="amidaku-build" type="button">あみだを作る</button><button id="amidaku-reveal" type="button" disabled>結果を表示</button></div>
         <p class="error" id="amidaku-error" role="alert"></p>
       </div>
-      <div class="panel amidaku-board">
+      <div class="panel amidaku-board" id="amidaku-board">
         <p class="hint">名前と結果を直接編集できます。⠿をドラッグして、同じ段の位置を入れ替えられます。</p>
         <p class="ladder-row-label">参加者</p>
         <div id="amidaku-name-slots" class="ladder-slots"></div>
         <div class="ladder-center"><svg id="ladder" viewBox="0 0 1000 420" preserveAspectRatio="none" role="img" aria-label="あみだくじ"></svg><div id="ladder-cover" class="ladder-cover" aria-hidden="true"><span>結果はまだ秘密</span></div></div>
         <div id="amidaku-prize-slots" class="ladder-slots"></div>
         <p class="ladder-row-label">結果</p>
-        <p class="hint">公開後に名前を選ぶと道筋が表示されます。</p>
-        <div id="amidaku-buttons" class="choice-buttons"></div>
-        <output id="amidaku-result" class="result" aria-live="polite">準備ができたら、あみだを作ろう</output>
-        <button id="amidaku-retry" type="button" hidden>やりなおす</button>
+        <div class="amidaku-summary"><p class="hint">公開後に名前を選ぶと道筋が表示されます。</p><div id="amidaku-buttons" class="choice-buttons"></div><output id="amidaku-result" class="result" aria-live="polite">準備ができたら、あみだを作ろう</output><button id="amidaku-retry" type="button" hidden>やりなおす</button></div>
       </div>
       <div class="guide"><h2>使い方</h2><p>ライン数を選び、参加者と結果をあみだの上下で直接編集します。取っ手をドラッグすると位置を入れ替えられます。キーボードでは取っ手に合わせて左右矢印キーで移動できます。</p><p>初期値は当たりが1つ、残りははずれです。ラインを増やすと参加者とはずれが追加され、減らすと未編集のはずれから優先して削除されます。「あみだを作る」の後に「結果を表示」でカバーが開きます。もう一度作るときは「やりなおす」を押します。</p></div>
     </section>

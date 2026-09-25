@@ -291,6 +291,7 @@
     ladderRevealTimer = null;
     ladderState.rungs = null;
     ladderState.revealed = false;
+    $("amidaku-board").classList.remove("has-results");
     const cover = $("ladder-cover");
     cover.hidden = false;
     cover.classList.remove("opening");
@@ -433,6 +434,7 @@
       ladderRevealTimer = null;
       $("ladder-cover").hidden = true;
       $("ladder-cover").classList.remove("opening");
+      $("amidaku-board").classList.add("has-results");
       $("amidaku-retry").hidden = false;
       const buttons = $("amidaku-buttons");
       buttons.replaceChildren();
