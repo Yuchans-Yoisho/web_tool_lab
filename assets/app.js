@@ -462,18 +462,48 @@
   });
 
   let diceRolling = false;
-  const diceSides = [4, 6, 8, 10, 12, 20];
-  function renderDice(count, sides, rolling) {
+  const dicePresets = [4, 6, 8, 10, 12, 20, 30, 60, 100];
+  const specialFaces = {
+    shigoro: [4, 4, 5, 5, 6, 6],
+    pinzoro: [1, 1, 1, 1, 1, 1]
+  };
+
+  function diceSettings() {
+    const count = Number($("dice-count").value);
+    const mode = $("dice-sides").value;
+    if (!Number.isInteger(count) || count < 1 || count > 100) return null;
+    if (mode === "shigoro") return { count, sides: 6, mode, label: "456賽" };
+    if (mode === "pinzoro") return { count, sides: 6, mode, label: "ピンゾロ賽" };
+    if (mode === "custom") {
+      const raw = $("dice-custom-sides").value.trim().normalize("NFKC");
+      if (!/^[0-9]+$/.test(raw)) return null;
+      const sides = Number(raw);
+      if (!Number.isInteger(sides) || sides < 2 || sides > 10000) return null;
+      return { count, sides, mode, label: sides + "面ダイス" };
+    }
+    const sides = Number(mode);
+    if (!dicePresets.includes(sides)) return null;
+    return { count, sides, mode: "standard", label: sides + "面ダイス" };
+  }
+
+  function diceValue(settings) {
+    const faces = specialFaces[settings.mode];
+    return faces ? faces[randomInt(faces.length)] : randomInt(settings.sides) + 1;
+  }
+
+  function renderDice(settings, rolling) {
     const container = $("dice-faces");
     container.replaceChildren();
-    if (count === 1) container.classList.add("single");
+    $("dice").classList.toggle("many-dice", settings.count > 10);
+    if (settings.count === 1) container.classList.add("single");
     else container.classList.remove("single");
+    const shape = settings.mode === "standard" ? "d" + settings.sides : settings.mode;
     const dice = [];
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < settings.count; i++) {
       const die = document.createElement("span");
-      die.className = "die die-d" + sides;
+      die.className = "die die-" + shape;
       if (rolling) die.classList.add("rolling");
-      die.style.animationDelay = i * 55 + "ms";
+      die.style.animationDelay = Math.min(i * 55, 350) + "ms";
       const value = document.createElement("span");
       value.className = "die-value";
       value.textContent = "?";
@@ -486,30 +516,44 @@
 
   function previewDice() {
     if (diceRolling) return;
-    const count = Number($("dice-count").value);
-    const sides = Number($("dice-sides").value);
-    if (!Number.isInteger(count) || count < 1 || count > 10 || !diceSides.includes(sides)) return;
-    renderDice(count, sides, false);
+    const custom = $("dice-sides").value === "custom";
+    $("dice-custom-wrap").hidden = !custom;
+    const settings = diceSettings();
+    if (!settings) {
+      const count = Number($("dice-count").value);
+      renderDice({ count: Number.isInteger(count) && count >= 1 && count <= 100 ? count : 1, mode: "custom" }, false);
+      $("dice-roll").disabled = true;
+      showError("dice-error", custom ? "面数は2〜10,000の整数で入力してください。" : "サイコロの種類を選んでください。");
+      $("dice-result").textContent = "面数を選んでね";
+      $("dice-roll-details").hidden = true;
+      return;
+    }
+    showError("dice-error", "");
+    $("dice-roll").disabled = false;
+    renderDice(settings, false);
     $("dice-result").textContent = "振ってみよう";
+    $("dice-roll-details").hidden = true;
   }
 
   $("dice-count")?.addEventListener("change", previewDice);
   $("dice-sides")?.addEventListener("change", previewDice);
+  $("dice-custom-sides")?.addEventListener("input", previewDice);
   $("dice-roll")?.addEventListener("click", () => {
     if (diceRolling) return;
-    const count = Number($("dice-count").value);
-    const sides = Number($("dice-sides").value);
-    if (!Number.isInteger(count) || count < 1 || count > 10 || !diceSides.includes(sides)) return;
-    const rolls = Array.from({ length: count }, () => randomInt(sides) + 1);
-    const dice = renderDice(count, sides, true);
+    const settings = diceSettings();
+    if (!settings) { previewDice(); return; }
+    const rolls = Array.from({ length: settings.count }, () => diceValue(settings));
+    const dice = renderDice(settings, true);
     diceRolling = true;
     $("dice-roll").disabled = true;
     $("dice-count").disabled = true;
     $("dice-sides").disabled = true;
+    $("dice-custom-sides").disabled = true;
     $("dice-result").textContent = "転がり中…";
-    for (let tick = 1; tick <= 8; tick++) {
+    $("dice-roll-details").hidden = true;
+    for (let tick = 1; tick <= (settings.count > 10 ? 5 : 8); tick++) {
       window.setTimeout(() => {
-        dice.forEach(({ value }) => { value.textContent = String(randomInt(sides) + 1); });
+        dice.forEach(({ value }) => { value.textContent = String(diceValue(settings)); });
       }, tick * 100);
     }
     window.setTimeout(() => {
@@ -517,12 +561,20 @@
         value.textContent = String(rolls[index]);
         die.classList.remove("rolling");
       });
-      $("dice-result").textContent = sides + "面ダイス / 出目 " + rolls.join("・") + " / 合計 " + rolls.reduce((a, b) => a + b, 0);
+      const total = rolls.reduce((a, b) => a + b, 0);
+      if (settings.count > 10) {
+        $("dice-result").textContent = settings.label + " × " + settings.count + "個 / 合計 " + total;
+        $("dice-roll-list").textContent = rolls.join("・");
+        $("dice-roll-details").hidden = false;
+      } else {
+        $("dice-result").textContent = settings.label + " / 出目 " + rolls.join("・") + " / 合計 " + total;
+      }
       $("dice-roll").disabled = false;
       $("dice-count").disabled = false;
       $("dice-sides").disabled = false;
+      $("dice-custom-sides").disabled = false;
       diceRolling = false;
-    }, 1030 + (count - 1) * 55);
+    }, 1030 + Math.min((settings.count - 1) * 55, 350));
     window.trackToolEvent("dice", "generate");
   });
 })();

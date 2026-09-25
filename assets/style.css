@@ -56,6 +56,10 @@
 
 .dice-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .dice-settings>div{min-width:0}
+.dice-custom-wrap[hidden]{display:none}
+.dice-custom-wrap{margin-top:12px}
+.dice-custom-wrap input{width:min(100%,220px);border:1.5px solid #bac5ca;border-radius:12px;background:#fffdfa;color:#263a4a;font:inherit;padding:10px 12px}
+#dice .error:empty{display:none}
 .dice-faces{min-height:170px;gap:10px;padding:40px 0 22px;font-size:inherit;line-height:normal;color:inherit}
 .dice-faces .die{--die-color:#f7a46b;display:grid;place-items:center;width:74px;height:74px;flex:none;border-radius:14px;background:linear-gradient(145deg,#fff8e6,var(--die-color));color:#263a4a;font-size:2rem;font-weight:900;text-shadow:0 1px #ffffffaa;filter:drop-shadow(0 5px 4px #263a4a22);transform-origin:50% 50%}
 .dice-faces .die-value{display:block}
@@ -66,6 +70,23 @@
 .dice-faces .die-d10{--die-color:#a9bff1;clip-path:polygon(50% 0,95% 28%,80% 85%,50% 100%,20% 85%,5% 28%)}
 .dice-faces .die-d12{--die-color:#f3cce0;clip-path:polygon(25% 5%,75% 5%,98% 50%,75% 95%,25% 95%,2% 50%)}
 .dice-faces .die-d20{--die-color:#ead28a;clip-path:polygon(50% 0,78% 9%,97% 35%,97% 65%,78% 91%,50% 100%,22% 91%,3% 65%,3% 35%,22% 9%)}
+.dice-faces .die-d30{--die-color:#c6dabb;clip-path:polygon(50% 0,78% 9%,97% 35%,97% 65%,78% 91%,50% 100%,22% 91%,3% 65%,3% 35%,22% 9%)}
+.dice-faces .die-d60{--die-color:#cbbce8;border-radius:50%}
+.dice-faces .die-d100{--die-color:#a8d9ce;border-radius:50%}
+.dice-faces .die-shigoro{--die-color:#f5ba82}
+.dice-faces .die-pinzoro{--die-color:#f0b3bb}
+.dice-faces .die-custom{--die-color:#becedb;border-radius:50%;font-size:1.15rem}
+.dice-faces.single .die-custom{font-size:1.65rem}
+#dice.many-dice .workspace{grid-template-columns:minmax(0,1fr)}
+#dice.many-dice .dice-faces{min-height:0;gap:5px;padding:14px 0 5px}
+#dice.many-dice .dice-faces .die{width:42px;height:42px;border-radius:9px;font-size:1.05rem}
+#dice.many-dice .dice-faces .die-custom{font-size:.82rem}
+#dice.many-dice .result-panel{padding:12px 20px}
+#dice.many-dice .result-label{margin-top:3px}
+#dice.many-dice .result{font-size:1.3rem;margin:2px 0}
+#dice-roll-details{font-size:.84rem;max-width:100%;text-align:left}
+#dice-roll-details summary{cursor:pointer;font-weight:700;color:#165c76}
+#dice-roll-list{overflow-wrap:anywhere;margin:4px 0;line-height:1.5}
 .die.rolling{animation:die-tumble 950ms cubic-bezier(.22,.72,.24,1) both}
 @keyframes die-tumble{0%{transform:translateY(-45px) rotate(-65deg) scale(.78)}24%{transform:translateY(18px) rotate(72deg) scale(1.08)}48%{transform:translateY(-24px) rotate(175deg) scale(.9)}75%{transform:translateY(11px) rotate(315deg) scale(1.05)}100%{transform:translateY(0) rotate(360deg) scale(1)}}
 

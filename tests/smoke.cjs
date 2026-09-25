@@ -14,7 +14,8 @@ class FakeElement {
     this.classList = {
       add: (name) => this.classes.add(name),
       remove: (name) => this.classes.delete(name),
-      contains: (name) => this.classes.has(name)
+      contains: (name) => this.classes.has(name),
+      toggle: (name, force) => { if (force ?? !this.classes.has(name)) this.classes.add(name); else this.classes.delete(name); }
     };
   }
   addEventListener(name, handler) { this.handlers[name] = handler; }
@@ -207,7 +208,7 @@ get("dice-sides").handlers.change();
 assert.equal(get("dice-faces").children.length, 3, "dice preview follows the selected count");
 assert.equal(get("dice-faces").children[0].className, "die die-d8");
 assert.equal(get("dice-faces").children[0].children[0].textContent, "?");
-for (const sides of [4, 6, 8, 10, 12, 20]) {
+for (const sides of [4, 6, 8, 10, 12, 20, 30, 60, 100]) {
   const count = sides === 20 ? 10 : 2;
   get("dice-count").value = String(count);
   get("dice-sides").value = String(sides);
@@ -230,9 +231,67 @@ for (const sides of [4, 6, 8, 10, 12, 20]) {
   assert.equal(get("dice-result").textContent, sides + "面ダイス / 出目 " + Array(count).fill(sides).join("・") + " / 合計 " + count * sides);
   assert.ok(get("dice-faces").children.every((die) => die.children[0].textContent === String(sides)));
 }
+for (const count of [20, 50, 100]) {
+  get("dice-count").value = String(count);
+  get("dice-sides").value = "6";
+  get("dice-count").handlers.change();
+  assert.equal(get("dice-faces").children.length, count);
+  assert.equal(get("dice").classList.contains("many-dice"), true);
+  randomValues.length = 0;
+  randomValues.push(...Array(count).fill(5));
+  get("dice-roll").click();
+  while (timers.length) timers.shift()();
+  assert.equal(get("dice-result").textContent, "6面ダイス × " + count + "個 / 合計 " + count * 6);
+  assert.equal(get("dice-roll-details").hidden, false);
+  assert.equal(get("dice-roll-list").textContent.split("・").length, count);
+  assert.ok(get("dice-faces").children.every((die) => die.children[0].textContent === "6"));
+}
+get("dice-count").value = "3";
+get("dice-sides").value = "shigoro";
+get("dice-sides").handlers.change();
+assert.equal(get("dice").classList.contains("many-dice"), false);
+assert.equal(get("dice-roll-details").hidden, true);
+assert.equal(get("dice-faces").children[0].className, "die die-shigoro");
+randomValues.length = 0;
+randomValues.push(0, 2, 4);
+get("dice-roll").click();
+while (timers.length) timers.shift()();
+assert.equal(get("dice-result").textContent, "456賽 / 出目 4・5・6 / 合計 15");
+get("dice-sides").value = "pinzoro";
+get("dice-sides").handlers.change();
+randomValues.length = 0;
+randomValues.push(5, 4, 3);
+get("dice-roll").click();
+while (timers.length) timers.shift()();
+assert.equal(get("dice-result").textContent, "ピンゾロ賽 / 出目 1・1・1 / 合計 3");
+get("dice-sides").value = "custom";
+get("dice-sides").handlers.change();
+assert.equal(get("dice-custom-wrap").hidden, false);
+assert.equal(get("dice-roll").disabled, true, "custom dice require a valid number of sides");
+get("dice-custom-sides").value = "３７";
+get("dice-custom-sides").handlers.input();
+assert.equal(get("dice-roll").disabled, false);
+assert.equal(get("dice-faces").children[0].className, "die die-custom");
+get("dice-count").value = "2";
+randomValues.length = 0;
+randomValues.push(0, 36);
+get("dice-roll").click();
+while (timers.length) timers.shift()();
+assert.equal(get("dice-result").textContent, "37面ダイス / 出目 1・37 / 合計 38");
+get("dice-custom-sides").value = "10000";
+get("dice-custom-sides").handlers.input();
+randomValues.length = 0;
+randomValues.push(9999, 9999);
+get("dice-roll").click();
+while (timers.length) timers.shift()();
+assert.equal(get("dice-result").textContent, "10000面ダイス / 出目 10000・10000 / 合計 20000");
+get("dice-custom-sides").value = "10001";
+get("dice-custom-sides").handlers.input();
+assert.equal(get("dice-roll").disabled, true);
+assert.match(get("dice-error").textContent, /2〜10,000/);
 get("dice-sides").value = "7";
 get("dice-roll").click();
-assert.equal(get("dice-roll").disabled, false, "unsupported dice sides are rejected");
+assert.equal(get("dice-roll").disabled, true, "unsupported dice sides are rejected");
 assert.equal(events[0].join(":"), "roulette:generate");
 assert.equal(events.at(-1).join(":"), "dice:generate");
 assert.equal(events.filter((x) => x.join(":") === "amidaku:generate").length, 3);

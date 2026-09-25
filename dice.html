@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="4〜20面のサイコロを1〜10個同時に振れる無料ツール。登録不要。">
+  <meta name="description" content="4〜100面・任意面数・特殊な6面賽を最大100個同時に振れる無料ツール。登録不要。">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https://www.googletagmanager.com https://*.google-analytics.com; connect-src https://www.googletagmanager.com https://*.google-analytics.com https://*.google.com; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>サイコロ｜ちょい決めツール</title>
   <link rel="stylesheet" href="./assets/style.css">
@@ -18,10 +18,10 @@
     <section class="tool-section" id="dice" aria-labelledby="dice-title">
       <div class="section-heading"><span class="eyebrow">ランダムツール</span><h1 id="dice-title">サイコロ</h1><p>個数と面数を選んで、サイコロを振ろう。</p></div>
       <div class="workspace">
-        <div class="panel"><div class="dice-settings"><div><label for="dice-count">サイコロの数</label><select id="dice-count"><option value="1">1個</option><option value="2">2個</option><option value="3">3個</option><option value="4">4個</option><option value="5">5個</option><option value="6">6個</option><option value="7">7個</option><option value="8">8個</option><option value="9">9個</option><option value="10">10個</option></select></div><div><label for="dice-sides">サイコロの面数</label><select id="dice-sides"><option value="4">4面</option><option value="6" selected>6面</option><option value="8">8面</option><option value="10">10面</option><option value="12">12面</option><option value="20">20面</option></select></div></div><button id="dice-roll" type="button">サイコロを振る</button></div>
-        <div class="panel result-panel"><div id="dice-faces" class="dice-faces single" aria-hidden="true"><span class="die die-d6"><span class="die-value">?</span></span></div><p class="result-label">結果</p><output id="dice-result" class="result" aria-live="polite">振ってみよう</output></div>
+        <div class="panel"><div class="dice-settings"><div><label for="dice-count">サイコロの数</label><select id="dice-count"><option value="1">1個</option><option value="2">2個</option><option value="3">3個</option><option value="4">4個</option><option value="5">5個</option><option value="6">6個</option><option value="7">7個</option><option value="8">8個</option><option value="9">9個</option><option value="10">10個</option><option value="20">20個</option><option value="50">50個</option><option value="100">100個</option></select></div><div><label for="dice-sides">サイコロの種類</label><select id="dice-sides"><option value="4">4面</option><option value="6" selected>6面</option><option value="8">8面</option><option value="10">10面</option><option value="12">12面</option><option value="20">20面</option><option value="30">30面</option><option value="60">60面</option><option value="100">100面</option><option value="shigoro">456賽（4・5・6が各2面）</option><option value="pinzoro">ピンゾロ賽（全て1）</option><option value="custom">その他（任意の面数）</option></select></div></div><div id="dice-custom-wrap" class="dice-custom-wrap" hidden><label for="dice-custom-sides">面数を入力（2〜10,000）</label><input id="dice-custom-sides" type="text" inputmode="numeric" maxlength="5" placeholder="例: 37" autocomplete="off"></div><button id="dice-roll" type="button">サイコロを振る</button><p class="error" id="dice-error" role="alert"></p></div>
+        <div class="panel result-panel"><div id="dice-faces" class="dice-faces single" aria-hidden="true"><span class="die die-d6"><span class="die-value">?</span></span></div><p class="result-label">結果</p><output id="dice-result" class="result" aria-live="polite">振ってみよう</output><details id="dice-roll-details" hidden><summary>出目の一覧を見る</summary><p id="dice-roll-list"></p></details></div>
       </div>
-      <div class="guide"><h2>使い方</h2><p>4・6・8・10・12・20面ダイスを1〜10個まで同時に振れます。転がった後に各出目と合計を表示します。</p><p>ボードゲームや遊びの順番決めに、その場ですぐ使えます。</p></div>
+      <div class="guide"><h2>使い方</h2><p>定番の4〜100面に加え、その他で2〜10,000面を指定できます。最大100個を同時に転がし、各出目と合計を表示します。</p><p>456賽は4・5・6が各2面、ピンゾロ賽は全6面が1です。ボードゲームや遊びの順番決めに使えます。</p></div>
     </section>
   </main>
   <footer><a href="./privacy.html">プライバシー</a><span>© 2026 ちょい決めツール</span></footer>
