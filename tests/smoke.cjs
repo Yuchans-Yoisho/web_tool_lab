@@ -1,7 +1,6 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
-const { webcrypto } = require("node:crypto");
 
 class FakeElement {
   constructor() {
@@ -30,9 +29,10 @@ get("roulette-motion").checked = true;
 const events = [];
 const frames = [];
 const timers = [];
+const randomValues = [0, 1]; // 最初の抽選は候補0、演出はフェイントあり
 const context = {
   document: { getElementById: get, createElement: () => new FakeElement(), createElementNS: () => new FakeElement() },
-  crypto: webcrypto,
+  crypto: { getRandomValues: (values) => { values[0] = randomValues.shift() ?? 0; return values; } },
   window: {
     trackToolEvent: (tool, action) => events.push([tool, action]),
     matchMedia: () => ({ matches: true }),
@@ -52,10 +52,22 @@ while (frames.length) frames.shift()();
 assert.match(get("wheel").style.transform, /^rotate\(\d+deg\)$/);
 assert.equal(timers.length, 1);
 timers.shift()();
+assert.equal(get("roulette-result").textContent, "止まりそう…？");
+timers.shift()();
+assert.equal(get("roulette-result").textContent, "まだ回る！");
+while (frames.length) frames.shift()();
+assert.equal(timers.length, 1);
+timers.shift()();
 assert.ok(["<img src=x onerror=alert(1)>", "安全"].includes(get("roulette-result").textContent));
 assert.equal(get("roulette-run").disabled, false);
 assert.equal(get("roulette-error").textContent, "");
 assert.ok(get("wheel").children.length > 0);
+get("roulette-items").value = "A\nB";
+randomValues.push(0, 0); // 候補0、フェイントなし
+get("roulette-run").click();
+while (frames.length) frames.shift()();
+timers.shift()();
+assert.equal(get("roulette-result").textContent, "A");
 get("roulette-items").value = "ひとつだけ";
 get("roulette-run").click();
 assert.match(get("roulette-error").textContent, /2〜20件/);

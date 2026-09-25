@@ -67,31 +67,52 @@
       showError("roulette-error", "");
       const choice = randomInt(items.length);
       renderWheel(items);
-      // SVG の最初の区画は上から始まる。区画の中央を上の印へ合わせる。
-      const center = 360 * (choice + 0.5) / items.length;
+      // 約2/3回は隣の候補で一度止まりそうになり、最後に一コマ進む。
+      // 抽選したchoiceは演出より先に決めるので、当選確率には影響しない。
+      const animate = $("roulette-motion").checked;
+      const fakeStop = animate && randomInt(3) !== 0;
+      const firstChoice = fakeStop ? (choice + 1) % items.length : choice;
+      const center = 360 * (firstChoice + 0.5) / items.length;
       const target = (360 - center) % 360;
       const current = ((wheelRotation % 360) + 360) % 360;
-      wheelRotation += 1080 + ((target - current + 360) % 360);
+      const firstRotation = wheelRotation + 1440 + ((target - current + 360) % 360);
+      const finalRotation = firstRotation + (fakeStop ? 360 / items.length : 0);
+      wheelRotation = finalRotation;
       spinning = true;
       rouletteButton.disabled = true;
       $("roulette-result").textContent = "回転中…";
       const wheel = $("wheel");
-      const animate = $("roulette-motion").checked;
-      wheel.style.transition = animate ? "" : "none";
       const showResult = () => {
         $("roulette-result").textContent = items[choice];
         rouletteButton.disabled = false;
         spinning = false;
       };
       if (!animate) {
-        wheel.style.transform = "rotate(" + wheelRotation + "deg)";
+        wheel.style.transition = "none";
+        wheel.style.transform = "rotate(" + finalRotation + "deg)";
         showResult();
       } else {
-        // DOM更新後に一度描画してから角度を変え、初回もtransitionを発火させる。
-        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
-          wheel.style.transform = "rotate(" + wheelRotation + "deg)";
-          window.setTimeout(showResult, 2800);
-        }));
+        const nextPaint = (callback) => window.requestAnimationFrame(() => window.requestAnimationFrame(callback));
+        const firstDuration = fakeStop ? 2600 : 3400;
+        wheel.style.transition = "transform " + firstDuration + "ms cubic-bezier(.12,.72,.18,1)";
+        nextPaint(() => {
+          wheel.style.transform = "rotate(" + firstRotation + "deg)";
+          window.setTimeout(() => {
+            if (!fakeStop) {
+              showResult();
+              return;
+            }
+            $("roulette-result").textContent = "止まりそう…？";
+            window.setTimeout(() => {
+              $("roulette-result").textContent = "まだ回る！";
+              wheel.style.transition = "transform 850ms cubic-bezier(.3,0,.2,1)";
+              nextPaint(() => {
+                wheel.style.transform = "rotate(" + finalRotation + "deg)";
+                window.setTimeout(showResult, 850);
+              });
+            }, 420);
+          }, firstDuration);
+        });
       }
       window.trackToolEvent("roulette", "generate");
     } catch (error) { showError("roulette-error", error.message); }
