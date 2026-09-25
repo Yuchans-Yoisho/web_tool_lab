@@ -59,7 +59,6 @@
   const rouletteButton = $("roulette-run");
   if (rouletteButton) {
     renderWheel(lines($("roulette-items").value, 20));
-    $("roulette-motion-note").hidden = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
   rouletteButton?.addEventListener("click", () => {
     if (spinning) return;
@@ -77,12 +76,14 @@
       rouletteButton.disabled = true;
       $("roulette-result").textContent = "回転中…";
       const wheel = $("wheel");
+      const animate = $("roulette-motion").checked;
+      wheel.style.transition = animate ? "" : "none";
       const showResult = () => {
         $("roulette-result").textContent = items[choice];
         rouletteButton.disabled = false;
         spinning = false;
       };
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (!animate) {
         wheel.style.transform = "rotate(" + wheelRotation + "deg)";
         showResult();
       } else {

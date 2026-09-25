@@ -26,6 +26,7 @@ const get = (id) => {
 };
 for (const id of ["roulette-run", "amidaku-build", "dice-roll"]) get(id);
 get("roulette-items").value = "映画\n散歩";
+get("roulette-motion").checked = true;
 const events = [];
 const frames = [];
 const timers = [];
@@ -34,7 +35,7 @@ const context = {
   crypto: webcrypto,
   window: {
     trackToolEvent: (tool, action) => events.push([tool, action]),
-    matchMedia: () => ({ matches: false }),
+    matchMedia: () => ({ matches: true }),
     requestAnimationFrame: (callback) => frames.push(callback),
     setTimeout: (callback) => timers.push(callback)
   },
@@ -42,7 +43,6 @@ const context = {
 };
 vm.runInNewContext(fs.readFileSync("assets/app.js", "utf8"), context);
 assert.ok(get("wheel").children.length > 0, "wheel is visible before first click");
-assert.equal(get("roulette-motion-note").hidden, true);
 
 get("roulette-items").value = "<img src=x onerror=alert(1)>\n安全";
 get("roulette-run").click();
@@ -59,6 +59,11 @@ assert.ok(get("wheel").children.length > 0);
 get("roulette-items").value = "ひとつだけ";
 get("roulette-run").click();
 assert.match(get("roulette-error").textContent, /2〜20件/);
+get("roulette-items").value = "A\nB";
+get("roulette-motion").checked = false;
+get("roulette-run").click();
+assert.equal(get("wheel").style.transition, "none");
+assert.ok(["A", "B"].includes(get("roulette-result").textContent));
 
 get("amidaku-names").value = "A\nB\nC";
 get("amidaku-prizes").value = "甲\n乙\n丙";
