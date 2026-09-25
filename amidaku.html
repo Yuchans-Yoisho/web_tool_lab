@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="参加者と結果を入力して道筋をたどる無料あみだくじ。登録不要。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src https://www.google-analytics.com https://region1.google-analytics.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>あみだくじ｜ちょい決めツール</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <script defer src="./assets/config.js"></script>
+  <script defer src="./assets/analytics.js"></script>
+  <script defer src="./assets/app.js"></script>
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="./">ちょい決めツール</a><nav aria-label="ツール"><a href="./roulette.html">ルーレット</a><a href="./amidaku.html">あみだくじ</a><a href="./dice.html">サイコロ</a></nav></header>
+  <main class="single-tool">
+    <p class="back"><a href="./">← ツール一覧</a></p>
+    <section class="tool-section" id="amidaku" aria-labelledby="amidaku-title"><div class="section-heading"><span class="eyebrow">みんなで選択</span><h2 id="amidaku-title">あみだくじ</h2><p>参加者と結果を同じ数だけ入力して、線を作ろう。</p></div><div class="workspace"><div class="panel"><div class="field-pair"><div><label for="amidaku-names">参加者（2〜8人）</label><textarea id="amidaku-names" rows="7" maxlength="328" spellcheck="false">あなた
+友だちA
+友だちB</textarea></div><div><label for="amidaku-prizes">結果（同じ数）</label><textarea id="amidaku-prizes" rows="7" maxlength="328" spellcheck="false">当たり
+おやつ
+次回に期待</textarea></div></div><p class="hint">各行40文字以内。入力内容は保存されません。</p><button id="amidaku-build" type="button">あみだくじを作る</button><p class="error" id="amidaku-error" role="alert"></p></div><div class="panel result-panel"><div class="ladder-scroll"><svg id="ladder" role="img" aria-label="あみだくじ"></svg></div><p class="hint">下の名前を選ぶと道筋が表示されます。</p><div id="amidaku-buttons" class="choice-buttons"></div><output id="amidaku-result" class="result" aria-live="polite">まずは作ってみよう</output></div></div></section>
+  </main>
+  <footer><a href="./privacy.html">プライバシー</a><span>© 2026 ちょい決めツール</span></footer>
+</body>
+</html>

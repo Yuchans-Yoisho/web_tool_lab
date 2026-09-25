@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="1〜10個の6面サイコロを振れる無料ツール。登録不要。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src https://www.google-analytics.com https://region1.google-analytics.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>サイコロ｜ちょい決めツール</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <script defer src="./assets/config.js"></script>
+  <script defer src="./assets/analytics.js"></script>
+  <script defer src="./assets/app.js"></script>
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="./">ちょい決めツール</a><nav aria-label="ツール"><a href="./roulette.html">ルーレット</a><a href="./amidaku.html">あみだくじ</a><a href="./dice.html">サイコロ</a></nav></header>
+  <main class="single-tool">
+    <p class="back"><a href="./">← ツール一覧</a></p>
+    <section class="tool-section" id="dice" aria-labelledby="dice-title"><div class="section-heading"><span class="eyebrow">ランダムツール</span><h2 id="dice-title">サイコロ</h2><p>個数を選んで、サイコロを振ろう。</p></div><div class="workspace"><div class="panel"><label for="dice-count">サイコロの数</label><select id="dice-count"><option value="1">1個</option><option value="2">2個</option><option value="3">3個</option><option value="4">4個</option><option value="5">5個</option><option value="6">6個</option><option value="7">7個</option><option value="8">8個</option><option value="9">9個</option><option value="10">10個</option></select><button id="dice-roll" type="button">サイコロを振る</button></div><div class="panel result-panel"><div id="dice-faces" class="dice-faces" aria-hidden="true"><span>⚄</span></div><p class="result-label">結果</p><output id="dice-result" class="result" aria-live="polite">振ってみよう</output></div></div></section>
+  </main>
+  <footer><a href="./privacy.html">プライバシー</a><span>© 2026 ちょい決めツール</span></footer>
+</body>
+</html>
