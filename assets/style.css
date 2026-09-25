@@ -84,6 +84,15 @@
 #dice.many-dice .result-panel{padding:12px 20px}
 #dice.many-dice .result-label{margin-top:3px}
 #dice.many-dice .result{font-size:1.3rem;margin:2px 0}
+#dice.crowd-dice .dice-faces{gap:2px}
+#dice.crowd-dice .dice-faces .die{width:28px;height:28px;border-radius:5px;font-size:.78rem;filter:none}
+#dice.crowd-dice .dice-faces .die-custom{font-size:.56rem}
+#dice.wall-dice .dice-faces .die{width:18px;height:18px;border-radius:3px;font-size:.64rem}
+#dice.wall-dice .dice-faces .die-custom{font-size:.4rem}
+#dice.wall-dice .dice-faces{max-height:36dvh;overflow:auto;align-content:flex-start}
+#dice.crowd-dice .dice-faces .die.rolling{animation:none}
+#dice.crowd-dice .dice-faces.rolling{animation:crowd-shake 1.3s ease-out both}
+@keyframes crowd-shake{0%,30%,60%{transform:translate(-3px,-5px)}15%,45%,75%{transform:translate(3px,3px)}100%{transform:none}}
 #dice-roll-details{font-size:.84rem;max-width:100%;text-align:left}
 #dice-roll-details summary{cursor:pointer;font-weight:700;color:#165c76}
 #dice-roll-list{overflow-wrap:anywhere;margin:4px 0;line-height:1.5}

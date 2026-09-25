@@ -231,12 +231,14 @@ for (const sides of [4, 6, 8, 10, 12, 20, 30, 60, 100]) {
   assert.equal(get("dice-result").textContent, sides + "面ダイス / 出目 " + Array(count).fill(sides).join("・") + " / 合計 " + count * sides);
   assert.ok(get("dice-faces").children.every((die) => die.children[0].textContent === String(sides)));
 }
-for (const count of [20, 50, 100]) {
+for (const count of [20, 50, 100, 200, 500, 1000]) {
   get("dice-count").value = String(count);
   get("dice-sides").value = "6";
   get("dice-count").handlers.change();
   assert.equal(get("dice-faces").children.length, count);
   assert.equal(get("dice").classList.contains("many-dice"), true);
+  assert.equal(get("dice").classList.contains("crowd-dice"), count > 100);
+  assert.equal(get("dice").classList.contains("wall-dice"), count > 500);
   randomValues.length = 0;
   randomValues.push(...Array(count).fill(5));
   get("dice-roll").click();
@@ -246,6 +248,9 @@ for (const count of [20, 50, 100]) {
   assert.equal(get("dice-roll-list").textContent.split("・").length, count);
   assert.ok(get("dice-faces").children.every((die) => die.children[0].textContent === "6"));
 }
+get("dice-count").value = "1001";
+get("dice-count").handlers.change();
+assert.equal(get("dice-roll").disabled, true, "count above the practical limit is rejected");
 get("dice-count").value = "3";
 get("dice-sides").value = "shigoro";
 get("dice-sides").handlers.change();

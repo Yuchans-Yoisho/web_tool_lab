@@ -471,7 +471,7 @@
   function diceSettings() {
     const count = Number($("dice-count").value);
     const mode = $("dice-sides").value;
-    if (!Number.isInteger(count) || count < 1 || count > 100) return null;
+    if (!Number.isInteger(count) || count < 1 || count > 1000) return null;
     if (mode === "shigoro") return { count, sides: 6, mode, label: "456賽" };
     if (mode === "pinzoro") return { count, sides: 6, mode, label: "ピンゾロ賽" };
     if (mode === "custom") {
@@ -495,6 +495,9 @@
     const container = $("dice-faces");
     container.replaceChildren();
     $("dice").classList.toggle("many-dice", settings.count > 10);
+    $("dice").classList.toggle("crowd-dice", settings.count > 100);
+    $("dice").classList.toggle("wall-dice", settings.count > 500);
+    container.classList.toggle("rolling", rolling && settings.count > 100);
     if (settings.count === 1) container.classList.add("single");
     else container.classList.remove("single");
     const shape = settings.mode === "standard" ? "d" + settings.sides : settings.mode;
@@ -521,7 +524,7 @@
     const settings = diceSettings();
     if (!settings) {
       const count = Number($("dice-count").value);
-      renderDice({ count: Number.isInteger(count) && count >= 1 && count <= 100 ? count : 1, mode: "custom" }, false);
+      renderDice({ count: Number.isInteger(count) && count >= 1 && count <= 1000 ? count : 1, mode: "custom" }, false);
       $("dice-roll").disabled = true;
       showError("dice-error", custom ? "面数は2〜10,000の整数で入力してください。" : "サイコロの種類を選んでください。");
       $("dice-result").textContent = "面数を選んでね";
@@ -551,7 +554,7 @@
     $("dice-custom-sides").disabled = true;
     $("dice-result").textContent = "転がり中…";
     $("dice-roll-details").hidden = true;
-    for (let tick = 1; tick <= (settings.count > 10 ? 5 : 8); tick++) {
+    for (let tick = 1; tick <= (settings.count > 100 ? 2 : settings.count > 10 ? 5 : 8); tick++) {
       window.setTimeout(() => {
         dice.forEach(({ value }) => { value.textContent = String(diceValue(settings)); });
       }, tick * 100);
@@ -561,6 +564,7 @@
         value.textContent = String(rolls[index]);
         die.classList.remove("rolling");
       });
+      $("dice-faces").classList.remove("rolling");
       const total = rolls.reduce((a, b) => a + b, 0);
       if (settings.count > 10) {
         $("dice-result").textContent = settings.label + " × " + settings.count + "個 / 合計 " + total;
