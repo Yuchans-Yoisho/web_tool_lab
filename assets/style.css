@@ -23,3 +23,22 @@
 @keyframes burst-right{to{transform:translateX(70%) rotate(15deg);opacity:.1}}
 @keyframes burst-rays{0%{opacity:0;transform:scale(.3) rotate(0)}35%{opacity:1}100%{opacity:.28;transform:scale(1.5) rotate(35deg)}}
 @keyframes burst-pop{0%{opacity:0;transform:scale(.2)}60%{opacity:1;transform:scale(1.14)}100%{opacity:1;transform:scale(1)}}
+.field-pair button,.ladder-actions button{border:0;border-radius:10px;background:#263a4a;color:white;padding:9px 15px;font-weight:800;min-height:42px}
+.field-pair button{margin-top:9px;width:100%}
+.field-pair button:hover,.ladder-actions button:hover{background:#165c76}
+.ladder-actions button:disabled{opacity:.48;cursor:not-allowed}
+.ladder-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ladder-order{margin-top:12px;display:grid;gap:5px}
+.ladder-order-row{display:flex;align-items:center;gap:6px;font-size:.86rem}
+.ladder-order-row span{flex:1;overflow-wrap:anywhere}
+.ladder-order-row button{border:1px solid #a9bac2;border-radius:8px;background:#ecf6f5;color:#263a4a;min-width:34px;min-height:34px;font-weight:800}
+.ladder-order-row button:disabled{opacity:.4;cursor:not-allowed}
+.ladder-stage{position:relative;margin:auto}
+.ladder-stage svg{display:block}
+.ladder-cover[hidden]{display:none}
+.ladder-cover{position:absolute;z-index:2;left:20px;right:20px;top:85px;bottom:50px;display:grid;place-items:center;border:3px solid #fffaf2;border-radius:12px;background:repeating-linear-gradient(135deg,#e0edf1 0 18px,#cce1e9 18px 36px);box-shadow:0 8px 24px #263a4a33;transition:clip-path 1.8s ease,opacity 1.8s ease;clip-path:inset(0 0 0 0)}
+.ladder-cover span{padding:12px 18px;border-radius:999px;background:#fffefb;color:#263a4a;font-weight:850;box-shadow:0 3px 12px #263a4a22}
+.ladder-cover.opening{clip-path:inset(100% 0 0 0);opacity:0}
+.field-pair{grid-template-columns:repeat(2,minmax(0,1fr))}
+.field-pair>div,.field-pair textarea{min-width:0}
+@media(max-width:760px){.workspace{grid-template-columns:minmax(0,1fr)}}

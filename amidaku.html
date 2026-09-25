@@ -15,11 +15,37 @@
   <header class="site-header"><a class="brand" href="./">ちょい決めツール</a><nav aria-label="ツール"><a href="./roulette.html">ルーレット</a><a href="./amidaku.html">あみだくじ</a><a href="./dice.html">サイコロ</a></nav></header>
   <main class="single-tool">
     <p class="back"><a href="./">← ツール一覧</a></p>
-    <section class="tool-section" id="amidaku" aria-labelledby="amidaku-title"><div class="section-heading"><span class="eyebrow">みんなで選択</span><h1 id="amidaku-title">あみだくじ</h1><p>参加者と結果を同じ数だけ入力して、線を作ろう。</p></div><div class="workspace"><div class="panel"><div class="field-pair"><div><label for="amidaku-names">参加者（2〜8人）</label><textarea id="amidaku-names" rows="7" maxlength="328" spellcheck="false">あなた
+    <section class="tool-section" id="amidaku" aria-labelledby="amidaku-title">
+      <div class="section-heading"><span class="eyebrow">みんなで選択</span><h1 id="amidaku-title">あみだくじ</h1><p>人数を決めて、参加者と結果を配置しよう。</p></div>
+      <div class="workspace">
+        <div class="panel">
+          <label for="amidaku-count">ライン数</label>
+          <select id="amidaku-count">
+            <option value="2">2本</option><option value="3" selected>3本</option><option value="4">4本</option><option value="5">5本</option><option value="6">6本</option><option value="7">7本</option><option value="8">8本</option>
+          </select>
+          <p class="hint">ラインは最初から表示されます。人数を変えると配置をやり直せます。</p>
+          <div class="field-pair">
+            <div><label for="amidaku-names">参加者</label><textarea id="amidaku-names" rows="7" maxlength="328" spellcheck="false">あなた
 友だちA
-友だちB</textarea></div><div><label for="amidaku-prizes">結果（同じ数）</label><textarea id="amidaku-prizes" rows="7" maxlength="328" spellcheck="false">当たり
+友だちB</textarea><button id="amidaku-apply-names" type="button">参加者を反映</button></div>
+            <div><label for="amidaku-prizes">結果</label><textarea id="amidaku-prizes" rows="7" maxlength="328" spellcheck="false">当たり
 おやつ
-次回に期待</textarea></div></div><p class="hint">各行40文字以内。入力内容は保存されません。</p><button id="amidaku-build" type="button">あみだくじを作る</button><p class="error" id="amidaku-error" role="alert"></p></div><div class="panel result-panel"><div class="ladder-scroll"><svg id="ladder" role="img" aria-label="あみだくじ"></svg></div><p class="hint">下の名前を選ぶと道筋が表示されます。</p><div id="amidaku-buttons" class="choice-buttons"></div><output id="amidaku-result" class="result" aria-live="polite">まずは作ってみよう</output></div></div><div class="guide"><h2>使い方</h2><p>参加者と結果を同じ行数で入力し、「あみだくじを作る」を押します。名前を押すと線をたどった先の結果を確認できます。</p><p>順番や結果を変えて作り直せます。結果には当たりのほか、役割や順番を入れても使えます。</p></div></section>
+次回に期待</textarea><button id="amidaku-apply-prizes" type="button">結果を反映</button></div>
+          </div>
+          <p class="hint">それぞれライン数と同じ件数を1行ずつ入力（各40文字以内）。反映時に位置がランダムに決まります。</p>
+          <div id="amidaku-name-order" class="ladder-order" aria-label="参加者の配置"></div>
+          <div class="ladder-actions"><button id="amidaku-build" type="button" disabled>あみだを作る</button><button id="amidaku-reveal" type="button" disabled>結果を表示</button></div>
+          <p class="error" id="amidaku-error" role="alert"></p>
+        </div>
+        <div class="panel result-panel">
+          <div class="ladder-scroll"><div id="ladder-stage" class="ladder-stage"><svg id="ladder" role="img" aria-label="あみだくじ"></svg><div id="ladder-cover" class="ladder-cover" hidden aria-hidden="true"><span>結果はまだ秘密</span></div></div></div>
+          <p class="hint">公開後に名前を選ぶと道筋が表示されます。</p>
+          <div id="amidaku-buttons" class="choice-buttons"></div>
+          <output id="amidaku-result" class="result" aria-live="polite">まずは参加者と結果を反映しよう</output>
+        </div>
+      </div>
+      <div class="guide"><h2>使い方</h2><p>ライン数を決め、参加者と結果を同じ件数だけ入力してそれぞれ反映します。参加者は反映後に左右へ移動できます。</p><p>両方を反映すると中央が隠れます。「あみだを作る」で線を作り、「結果を表示」でカバーを外します。名前を押すと道筋が光ります。</p></div>
+    </section>
   </main>
   <footer><a href="./privacy.html">プライバシー</a><span>© 2026 ちょい決めツール</span></footer>
 </body>

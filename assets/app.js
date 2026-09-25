@@ -194,7 +194,8 @@
     } catch (error) { showError("roulette-error", error.message); }
   });
 
-  let ladderState = null;
+  const ladderState = { count: 3, names: null, prizes: null, rungs: null, revealed: false };
+  let ladderRevealTimer = null;
   const xAt = (column) => 75 + column * 100;
   const yAt = (row) => 100 + row * 29;
 
@@ -237,60 +238,173 @@
     return rungs;
   }
 
+  function shuffled(items) {
+    const result = [...items];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = randomInt(i + 1);
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+
+  function ladderEntries(value, label) {
+    const entries = value.split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean);
+    if (entries.length !== ladderState.count) throw new Error(label + "を" + ladderState.count + "件入力してください。");
+    if (entries.some((entry) => Array.from(entry).length > 40)) throw new Error("各行は40文字以内にしてください。");
+    return entries;
+  }
+
   function drawLadder(selected = -1) {
-    const { names, prizes, rungs } = ladderState;
+    const { count, names, prizes, rungs } = ladderState;
     const svg = $("ladder");
     svg.replaceChildren();
-    const width = Math.max(320, 150 + (names.length - 1) * 100);
-    const height = yAt(rungs.length + 2) + 58;
+    const width = Math.max(320, 150 + (count - 1) * 100);
+    const height = yAt(Math.max(8, rungs?.length ?? 0) + 2) + 58;
     svg.setAttribute("viewBox", "0 0 " + width + " " + height);
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
-    names.forEach((name, i) => {
-      const line = element("line", { x1: xAt(i), y1: 100, x2: xAt(i), y2: yAt(rungs.length + 2), class: "ladder-line" });
+    const stage = $("ladder-stage");
+    stage.style.width = width + "px";
+    stage.style.height = height + "px";
+    for (let i = 0; i < count; i++) {
+      const line = element("line", { x1: xAt(i), y1: 100, x2: xAt(i), y2: height - 58, class: "ladder-line" });
       svg.append(line);
-      for (const [label, y] of [[name, 55], [prizes[i], height - 20]]) {
+      for (const [label, y] of [[names?.[i] ?? String(i + 1), 55], [prizes?.[i] ?? String(i + 1), height - 20]]) {
         const t = element("text", { x: xAt(i), y, "text-anchor": "middle", class: "ladder-label" });
-        t.textContent = Array.from(label).slice(0, 8).join("") + (Array.from(label).length > 8 ? "…" : "");
+        t.textContent = shortLabel(label, 8);
         svg.append(t);
       }
-    });
-    rungs.forEach((row, rowIndex) => row.forEach((col) => {
+    }
+    rungs?.forEach((row, rowIndex) => row.forEach((col) => {
       svg.append(element("line", { x1: xAt(col), y1: yAt(rowIndex + 1), x2: xAt(col + 1), y2: yAt(rowIndex + 1), class: "ladder-line" }));
     }));
-    if (selected >= 0) {
+    if (selected >= 0 && rungs) {
       const { points } = ladderPath(selected, rungs);
       svg.append(element("polyline", { points: points.map((p) => p.join(",")).join(" "), class: "ladder-highlight" }));
     }
   }
 
-  $("amidaku-build")?.addEventListener("click", () => {
-    try {
-      const names = lines($("amidaku-names").value, 8);
-      const prizes = lines($("amidaku-prizes").value, 8);
-      if (names.length !== prizes.length) throw new Error("参加者と結果の数を揃えてください。");
+  function updateLadderControls() {
+    const ready = !!(ladderState.names && ladderState.prizes);
+    const cover = $("ladder-cover");
+    cover.hidden = !ready || ladderState.revealed;
+    if (!ready || !ladderState.rungs) cover.classList.remove("opening");
+    $("amidaku-build").disabled = !ready || !!ladderState.rungs;
+    $("amidaku-reveal").disabled = !ladderState.rungs || ladderState.revealed;
+    if (!ladderState.rungs) $("amidaku-buttons").replaceChildren();
+  }
+
+  function resetLadderBuild() {
+    if (ladderRevealTimer) window.clearTimeout(ladderRevealTimer);
+    ladderRevealTimer = null;
+    ladderState.rungs = null;
+    ladderState.revealed = false;
+    $("amidaku-result").textContent = "準備ができたら、あみだを作ろう";
+    drawLadder();
+    updateLadderControls();
+  }
+
+  function renderNameOrder() {
+    const container = $("amidaku-name-order");
+    container.replaceChildren();
+    if (!ladderState.names) return;
+    ladderState.names.forEach((name, index) => {
+      const row = document.createElement("div");
+      row.className = "ladder-order-row";
+      const label = document.createElement("span");
+      label.textContent = (index + 1) + "番: " + name;
+      row.append(label);
+      for (const [text, step] of [["←", -1], ["→", 1]]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = text;
+        button.setAttribute("aria-label", name + "を" + (step < 0 ? "左" : "右") + "へ移動");
+        button.disabled = index + step < 0 || index + step >= ladderState.count;
+        button.addEventListener("click", () => {
+          [ladderState.names[index], ladderState.names[index + step]] =
+            [ladderState.names[index + step], ladderState.names[index]];
+          renderNameOrder();
+          resetLadderBuild();
+        });
+        row.append(button);
+      }
+      container.append(row);
+    });
+  }
+
+  const ladderCount = $("amidaku-count");
+  if (ladderCount) {
+    drawLadder();
+    updateLadderControls();
+    ladderCount.addEventListener("change", () => {
+      const count = Number(ladderCount.value);
+      if (!Number.isInteger(count) || count < 2 || count > 8) return;
+      ladderState.count = count;
+      ladderState.names = null;
+      ladderState.prizes = null;
+      $("amidaku-name-order").replaceChildren();
       showError("amidaku-error", "");
-      const rungs = buildRungs(names.length);
-      ladderState = { names, prizes, rungs };
-      drawLadder();
+      resetLadderBuild();
+    });
+    for (const [field, key] of [["amidaku-names", "names"], ["amidaku-prizes", "prizes"]]) {
+      $(field).addEventListener("input", () => {
+        ladderState[key] = null;
+        if (key === "names") $("amidaku-name-order").replaceChildren();
+        showError("amidaku-error", "");
+        resetLadderBuild();
+      });
+    }
+    for (const [buttonId, fieldId, key, label] of [
+      ["amidaku-apply-names", "amidaku-names", "names", "参加者"],
+      ["amidaku-apply-prizes", "amidaku-prizes", "prizes", "結果"]
+    ]) {
+      $(buttonId).addEventListener("click", () => {
+        try {
+          ladderState[key] = shuffled(ladderEntries($(fieldId).value, label));
+          showError("amidaku-error", "");
+          if (key === "names") renderNameOrder();
+          resetLadderBuild();
+        } catch (error) { showError("amidaku-error", error.message); }
+      });
+    }
+  }
+
+  $("amidaku-build")?.addEventListener("click", () => {
+    if (!ladderState.names || !ladderState.prizes || ladderState.rungs) return;
+    ladderState.rungs = buildRungs(ladderState.count);
+    drawLadder();
+    updateLadderControls();
+    $("amidaku-result").textContent = "あみだができました。結果を表示できます";
+    window.trackToolEvent("amidaku", "generate");
+  });
+
+  $("amidaku-reveal")?.addEventListener("click", () => {
+    if (!ladderState.rungs || ladderState.revealed) return;
+    ladderState.revealed = true;
+    $("amidaku-reveal").disabled = true;
+    $("ladder-cover").classList.add("opening");
+    $("amidaku-result").textContent = "カバーを外しています…";
+    ladderRevealTimer = window.setTimeout(() => {
+      ladderRevealTimer = null;
+      $("ladder-cover").hidden = true;
+      $("ladder-cover").classList.remove("opening");
       const buttons = $("amidaku-buttons");
       buttons.replaceChildren();
-      names.forEach((name, index) => {
+      ladderState.names.forEach((name, index) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "choice-button";
         button.textContent = name;
         button.addEventListener("click", () => {
           drawLadder(index);
-          const result = ladderPath(index, rungs).column;
-          $("amidaku-result").textContent = name + " → " + prizes[result];
+          const result = ladderPath(index, ladderState.rungs).column;
+          $("amidaku-result").textContent = name + " → " + ladderState.prizes[result];
           window.trackToolEvent("amidaku", "reveal");
         });
         buttons.append(button);
       });
-      $("amidaku-result").textContent = "名前を選んでみよう";
-      window.trackToolEvent("amidaku", "generate");
-    } catch (error) { showError("amidaku-error", error.message); }
+      $("amidaku-result").textContent = "名前を選ぶと道筋が光ります";
+    }, 1800);
   });
 
   $("dice-roll")?.addEventListener("click", () => {

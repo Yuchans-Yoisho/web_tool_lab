@@ -37,7 +37,8 @@ const get = (id) => {
   if (!ids.has(id)) ids.set(id, new FakeElement());
   return ids.get(id);
 };
-for (const id of ["roulette-run", "amidaku-build", "dice-roll"]) get(id);
+for (const id of ["roulette-run", "amidaku-count", "amidaku-build", "dice-roll"]) get(id);
+get("amidaku-count").value = "3";
 get("roulette-items").value = "映画\n散歩";
 get("roulette-motion").checked = true;
 get("roulette-effects").checked = true;
@@ -52,7 +53,8 @@ const context = {
     trackToolEvent: (tool, action) => events.push([tool, action]),
     matchMedia: () => ({ matches: true }),
     requestAnimationFrame: (callback) => frames.push(callback),
-    setTimeout: (callback) => timers.push(callback)
+    setTimeout: (callback) => timers.push(callback),
+    clearTimeout: (callback) => { const index = timers.indexOf(callback); if (index >= 0) timers.splice(index, 1); }
   },
   Uint32Array, Number, Array, Math, RangeError, Error
 };
@@ -118,12 +120,30 @@ get("roulette-run").click();
 assert.equal(get("wheel").style.transition, "none");
 assert.ok(["A", "B"].includes(get("roulette-result").textContent));
 
+assert.equal(get("ladder").children.filter((x) => x.attributes.class === "ladder-line").length, 3, "three lines appear on load");
+assert.equal(get("amidaku-build").disabled, true);
 get("amidaku-names").value = "A\nB\nC";
 get("amidaku-prizes").value = "甲\n乙\n丙";
+get("amidaku-apply-names").click();
+assert.equal(get("amidaku-name-order").children.length, 3);
+assert.equal(get("ladder-cover").hidden, true, "one applied list does not show the cover");
+const firstName = get("ladder").children[1].textContent;
+get("amidaku-name-order").children[0].children[2].click();
+assert.notEqual(get("ladder").children[1].textContent, firstName, "participant positions can be changed");
+get("amidaku-apply-prizes").click();
+assert.equal(get("ladder-cover").hidden, false, "both lists show the cover");
+assert.equal(get("amidaku-build").disabled, false);
 get("amidaku-build").click();
+assert.equal(get("ladder-cover").hidden, false, "rungs stay covered after generation");
+assert.equal(get("amidaku-reveal").disabled, false);
+get("amidaku-reveal").click();
+assert.equal(get("ladder-cover").hidden, false, "cover remains while reveal animation runs");
+assert.equal(get("amidaku-buttons").children.length, 0);
+advanceAnimation();
+assert.equal(get("ladder-cover").hidden, true);
 assert.equal(get("amidaku-buttons").children.length, 3);
 get("amidaku-buttons").children[0].click();
-assert.match(get("amidaku-result").textContent, /^A → (甲|乙|丙)$/);
+assert.match(get("amidaku-result").textContent, / → (甲|乙|丙)$/);
 assert.ok(get("ladder").children.some((x) => x.attributes.class === "ladder-highlight"));
 const assignments = new Set();
 for (const button of get("amidaku-buttons").children) {
@@ -131,13 +151,21 @@ for (const button of get("amidaku-buttons").children) {
   assignments.add(get("amidaku-result").textContent.split(" → ")[1]);
 }
 assert.equal(assignments.size, 3, "each result is assigned once");
-get("amidaku-prizes").value = "甲\n乙";
-get("amidaku-build").click();
-assert.match(get("amidaku-error").textContent, /数を揃えて/);
+get("amidaku-count").value = "8";
+get("amidaku-count").handlers.change();
+assert.equal(get("ladder").children.filter((x) => x.attributes.class === "ladder-line").length, 8, "changing count redraws the lines");
+assert.equal(get("amidaku-build").disabled, true);
+get("amidaku-names").value = "A\nB\nC";
+get("amidaku-apply-names").click();
+assert.match(get("amidaku-error").textContent, /8件/);
 get("amidaku-names").value = Array.from({ length: 8 }, (_, i) => "N" + i).join("\n");
 get("amidaku-prizes").value = Array.from({ length: 8 }, (_, i) => "P" + i).join("\n");
-get("amidaku-build").click();
+get("amidaku-apply-names").click();
+get("amidaku-apply-prizes").click();
 assert.equal(get("amidaku-error").textContent, "");
+get("amidaku-build").click();
+get("amidaku-reveal").click();
+advanceAnimation();
 const eightResults = new Set();
 for (const button of get("amidaku-buttons").children) {
   button.click();
