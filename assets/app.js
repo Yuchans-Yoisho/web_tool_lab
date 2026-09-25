@@ -280,6 +280,7 @@
     const ready = ladderReady();
     $("amidaku-build").disabled = !ready || !!ladderState.rungs;
     $("amidaku-reveal").disabled = !ladderState.rungs || ladderState.revealed;
+    $("amidaku-retry").hidden = !ladderState.revealed;
     if (!ladderState.rungs) $("amidaku-buttons").replaceChildren();
     if (!ready) showError("amidaku-error", "各ラインの参加者と結果を入力してください（各40文字以内）。");
     else showError("amidaku-error", "");
@@ -432,6 +433,7 @@
       ladderRevealTimer = null;
       $("ladder-cover").hidden = true;
       $("ladder-cover").classList.remove("opening");
+      $("amidaku-retry").hidden = false;
       const buttons = $("amidaku-buttons");
       buttons.replaceChildren();
       ladderState.names.forEach((name, index) => {
@@ -449,6 +451,12 @@
       });
       $("amidaku-result").textContent = "名前を選ぶと道筋が光ります";
     }, 1800);
+  });
+
+  $("amidaku-retry")?.addEventListener("click", () => {
+    if (!ladderState.revealed) return;
+    resetLadderBuild();
+    $("amidaku-build").focus();
   });
 
   $("dice-roll")?.addEventListener("click", () => {

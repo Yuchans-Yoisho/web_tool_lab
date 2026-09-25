@@ -169,6 +169,7 @@ assert.equal(get("amidaku-buttons").children.length, 0);
 advanceAnimation();
 assert.equal(get("ladder-cover").hidden, true);
 assert.equal(get("amidaku-buttons").children.length, 3);
+assert.equal(get("amidaku-retry").hidden, false);
 const assignments = new Set();
 for (const button of get("amidaku-buttons").children) {
   button.click();
@@ -176,6 +177,17 @@ for (const button of get("amidaku-buttons").children) {
 }
 assert.equal(assignments.size, 2, "the default results contain one win and two losses");
 assert.ok(get("ladder").children.some((x) => x.attributes.class === "ladder-highlight"));
+const currentName = get("amidaku-name-slots").children[0].children[0].value;
+const currentPrize = get("amidaku-prize-slots").children[0].children[0].value;
+get("amidaku-retry").click();
+assert.equal(get("amidaku-retry").hidden, true);
+assert.equal(get("ladder-cover").hidden, false);
+assert.equal(get("amidaku-buttons").children.length, 0);
+assert.equal(get("amidaku-build").disabled, false);
+assert.equal(get("amidaku-name-slots").children[0].children[0].value, currentName);
+assert.equal(get("amidaku-prize-slots").children[0].children[0].value, currentPrize);
+get("amidaku-build").click();
+assert.equal(get("amidaku-reveal").disabled, false, "retry allows a new ladder with the same entries");
 get("amidaku-count").value = "8";
 get("amidaku-count").handlers.change();
 assert.equal(get("ladder").children.filter((x) => x.attributes.class === "ladder-line").length, 8);
@@ -195,7 +207,7 @@ assert.equal(get("dice-faces").children.length, 10);
 assert.match(get("dice-result").textContent, /^出目 [1-6](・[1-6]){9} \/ 合計 \d+$/);
 assert.equal(events[0].join(":"), "roulette:generate");
 assert.equal(events.at(-1).join(":"), "dice:generate");
-assert.equal(events.filter((x) => x.join(":") === "amidaku:generate").length, 2);
+assert.equal(events.filter((x) => x.join(":") === "amidaku:generate").length, 3);
 
 const analyticsSource = fs.readFileSync("assets/analytics.js", "utf8");
 const appended = [];
