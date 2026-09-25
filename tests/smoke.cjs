@@ -25,18 +25,34 @@ const get = (id) => {
   return ids.get(id);
 };
 for (const id of ["roulette-run", "amidaku-build", "dice-roll"]) get(id);
+get("roulette-items").value = "映画\n散歩";
 const events = [];
+const frames = [];
+const timers = [];
 const context = {
   document: { getElementById: get, createElement: () => new FakeElement(), createElementNS: () => new FakeElement() },
   crypto: webcrypto,
-  window: { trackToolEvent: (tool, action) => events.push([tool, action]) },
+  window: {
+    trackToolEvent: (tool, action) => events.push([tool, action]),
+    matchMedia: () => ({ matches: false }),
+    requestAnimationFrame: (callback) => frames.push(callback),
+    setTimeout: (callback) => timers.push(callback)
+  },
   Uint32Array, Number, Array, Math, RangeError, Error
 };
 vm.runInNewContext(fs.readFileSync("assets/app.js", "utf8"), context);
+assert.ok(get("wheel").children.length > 0, "wheel is visible before first click");
 
 get("roulette-items").value = "<img src=x onerror=alert(1)>\n安全";
 get("roulette-run").click();
+assert.equal(get("roulette-result").textContent, "回転中…");
+assert.equal(get("roulette-run").disabled, true);
+while (frames.length) frames.shift()();
+assert.match(get("wheel").style.transform, /^rotate\(\d+deg\)$/);
+assert.equal(timers.length, 1);
+timers.shift()();
 assert.ok(["<img src=x onerror=alert(1)>", "安全"].includes(get("roulette-result").textContent));
+assert.equal(get("roulette-run").disabled, false);
 assert.equal(get("roulette-error").textContent, "");
 assert.ok(get("wheel").children.length > 0);
 get("roulette-items").value = "ひとつだけ";

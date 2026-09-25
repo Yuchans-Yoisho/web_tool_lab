@@ -55,7 +55,11 @@
   }
 
   let wheelRotation = 0;
-  $("roulette-run")?.addEventListener("click", () => {
+  let spinning = false;
+  const rouletteButton = $("roulette-run");
+  if (rouletteButton) renderWheel(lines($("roulette-items").value, 20));
+  rouletteButton?.addEventListener("click", () => {
+    if (spinning) return;
     try {
       const items = lines($("roulette-items").value, 20);
       showError("roulette-error", "");
@@ -66,8 +70,25 @@
       const target = (360 - center) % 360;
       const current = ((wheelRotation % 360) + 360) % 360;
       wheelRotation += 1080 + ((target - current + 360) % 360);
-      $("wheel").style.transform = "rotate(" + wheelRotation + "deg)";
-      $("roulette-result").textContent = items[choice];
+      spinning = true;
+      rouletteButton.disabled = true;
+      $("roulette-result").textContent = "回転中…";
+      const wheel = $("wheel");
+      const showResult = () => {
+        $("roulette-result").textContent = items[choice];
+        rouletteButton.disabled = false;
+        spinning = false;
+      };
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        wheel.style.transform = "rotate(" + wheelRotation + "deg)";
+        showResult();
+      } else {
+        // DOM更新後に一度描画してから角度を変え、初回もtransitionを発火させる。
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+          wheel.style.transform = "rotate(" + wheelRotation + "deg)";
+          window.setTimeout(showResult, 2800);
+        }));
+      }
       window.trackToolEvent("roulette", "generate");
     } catch (error) { showError("roulette-error", error.message); }
   });
