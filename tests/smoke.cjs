@@ -50,12 +50,53 @@ assert.equal(get("amidaku-buttons").children.length, 3);
 get("amidaku-buttons").children[0].click();
 assert.match(get("amidaku-result").textContent, /^A → (甲|乙|丙)$/);
 assert.ok(get("ladder").children.some((x) => x.attributes.class === "ladder-highlight"));
+const assignments = new Set();
+for (const button of get("amidaku-buttons").children) {
+  button.click();
+  assignments.add(get("amidaku-result").textContent.split(" → ")[1]);
+}
+assert.equal(assignments.size, 3, "each result is assigned once");
+get("amidaku-prizes").value = "甲\n乙";
+get("amidaku-build").click();
+assert.match(get("amidaku-error").textContent, /数を揃えて/);
+get("amidaku-names").value = Array.from({ length: 8 }, (_, i) => "N" + i).join("\n");
+get("amidaku-prizes").value = Array.from({ length: 8 }, (_, i) => "P" + i).join("\n");
+get("amidaku-build").click();
+assert.equal(get("amidaku-error").textContent, "");
+const eightResults = new Set();
+for (const button of get("amidaku-buttons").children) {
+  button.click();
+  eightResults.add(get("amidaku-result").textContent.split(" → ")[1]);
+}
+assert.equal(eightResults.size, 8, "all eight results are assigned once");
 
 get("dice-count").value = "10";
 get("dice-roll").click();
 assert.equal(get("dice-faces").children.length, 10);
 assert.match(get("dice-result").textContent, /^出目 [1-6](・[1-6]){9} \/ 合計 \d+$/);
-assert.deepEqual(events.map((x) => x.join(":")), [
-  "roulette:generate", "amidaku:generate", "amidaku:reveal", "dice:generate"
-]);
+assert.equal(events[0].join(":"), "roulette:generate");
+assert.equal(events.at(-1).join(":"), "dice:generate");
+assert.equal(events.filter((x) => x.join(":") === "amidaku:generate").length, 2);
+
+const analyticsSource = fs.readFileSync("assets/analytics.js", "utf8");
+const appended = [];
+const analyticsWindow = { TOOL_LAB_GA_ID: "" };
+const analyticsContext = {
+  window: analyticsWindow,
+  document: {
+    createElement: () => new FakeElement(),
+    head: { append: (node) => appended.push(node) }
+  },
+  Date, encodeURIComponent
+};
+vm.runInNewContext(analyticsSource, analyticsContext);
+assert.equal(appended.length, 0, "no Google script while GA ID is unset");
+analyticsWindow.TOOL_LAB_GA_ID = "G-ABCDEF1234";
+vm.runInNewContext(analyticsSource, analyticsContext);
+assert.equal(appended.length, 1);
+analyticsWindow.trackToolEvent("roulette", "generate");
+analyticsWindow.trackToolEvent("roulette", "unexpected");
+assert.equal(analyticsWindow.dataLayer.length, 3);
+assert.equal(analyticsWindow.dataLayer[2][0], "event");
+assert.equal(analyticsWindow.dataLayer[2][2].tool_name, "roulette");
 console.log("smoke checks passed");

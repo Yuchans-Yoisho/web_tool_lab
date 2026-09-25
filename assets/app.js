@@ -90,6 +90,31 @@
     return { column, points };
   }
 
+  function buildRungs(count) {
+    // 先に一様な順列を作ることで、各参加者の行き先を等確率にする。
+    const target = Array.from({ length: count }, (_, i) => i);
+    for (let i = count - 1; i > 0; i--) {
+      const j = randomInt(i + 1);
+      [target[i], target[j]] = [target[j], target[i]];
+    }
+    const order = Array.from({ length: count }, (_, i) => i);
+    const rungs = [];
+    for (let pos = 0; pos < count; pos++) {
+      let current = order.indexOf(target[pos]);
+      while (current > pos) {
+        rungs.push([current - 1]);
+        [order[current - 1], order[current]] = [order[current], order[current - 1]];
+        current--;
+      }
+    }
+    // 2回続く横線は行き先を変えず、道筋だけ増やす。
+    for (let i = 0; i < Math.floor(count / 2); i++) {
+      const col = randomInt(count - 1);
+      rungs.push([col], [col]);
+    }
+    return rungs;
+  }
+
   function drawLadder(selected = -1) {
     const { names, prizes, rungs } = ladderState;
     const svg = $("ladder");
@@ -123,15 +148,7 @@
       const prizes = lines($("amidaku-prizes").value, 8);
       if (names.length !== prizes.length) throw new Error("参加者と結果の数を揃えてください。");
       showError("amidaku-error", "");
-      const rowCount = Math.max(8, names.length * 4);
-      const rungs = [];
-      for (let row = 0; row < rowCount; row++) {
-        const candidates = [];
-        for (let col = 0; col < names.length - 1; col++) {
-          if ((candidates.length === 0 || candidates[candidates.length - 1] < col - 1) && randomInt(3) === 0) candidates.push(col);
-        }
-        rungs.push(candidates);
-      }
+      const rungs = buildRungs(names.length);
       ladderState = { names, prizes, rungs };
       drawLadder();
       const buttons = $("amidaku-buttons");
