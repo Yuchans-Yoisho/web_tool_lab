@@ -1,6 +1,6 @@
 # 公開前の確認
 
-このサイトは現在、ローカルだけにあります。リモートリポジトリは設定していません。
+このサイトは現在、ローカルだけにあります。リモートリポジトリは設定していません。初期公開は github.io URL・無広告で行い、独自ドメインは調査後に判断します。
 
 ## 1. 画面と動作を確認
 
@@ -19,13 +19,13 @@ Windows側のブラウザで http://localhost:8000/ を開きます。表示で�
 
 ## 2. 公開先と解析設定
 
-- 公開先のGitHubアカウント、リポジトリ名、必要なら独自ドメインを決める。
+- 公開先のGitHubアカウントとリポジトリ名を決める。初期公開時に独自ドメインは不要。
 - プライバシーページに、実際に使う配信事業者を反映する。
 - GA4のウェブデータストリームを作成し、assets/config.js に測定IDを設定する。
 - GA4で tool_name をイベントスコープのカスタムディメンションとして登録すると、同じイベント名の3ツールを比較できる。入力値・結果値は送らない。
 - 公開URLが確定したら、sitemap.xml を生成する。例:
 
-      python3 scripts/make_sitemap.py https://example.com/tool/
+      python3 scripts/make_sitemap.py https://ACCOUNT.github.io/REPOSITORY/
 
 - Search Consoleに公開サイトを登録する。
 
@@ -35,6 +35,7 @@ Windows側のブラウザで http://localhost:8000/ を開きます。表示で�
 - GA4のリアルタイム画面でページ閲覧と tool_generate / tool_reveal が確認できるか。
 - Search Consoleで各ツールページが検出・登録されるか。時間がかかる場合がある。
 - Search Consoleにsitemap.xmlを送信する。掲載順位や登録自体は保証されない。
+- ツール別の閲覧、利用、再訪、検索表示・クリックを継続記録する。収益化を検討する際は、運用費用と収入見込みを別に試算する。
 
 ## 自動チェック
 

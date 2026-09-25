@@ -2,6 +2,8 @@
 
 ルーレット、あみだくじ、サイコロを個別URLで公開する調査用の静的サイトです。サーバー処理、データベース、外部パッケージはありません。公開前の確認項目は PREPUBLISH.md にあります。
 
+初期方針は GitHub Pages の github.io URL で無広告公開し、GA4 と Search Console で利用状況を調べることです。独自ドメインや収益化は、調査結果を見てから判断します。
+
 ## ローカルで確認
 
 このディレクトリで Python の簡易サーバーを起動します。
@@ -27,9 +29,9 @@ GitHub Pages を選ぶ場合の手順:
 
 GitHub Pages は公開リポジトリの内容が閲覧可能になるため、鍵や個人情報を入れないでください。GitHub Pages の通常のURLは、たとえば https://ACCOUNT.github.io/REPOSITORY/roulette.html です。独自ドメインのユーザーサイトを作り、プロジェクトのリポジトリ名を tool にすると https://example.com/tool/roulette.html のようなURLにもできます。現在の相対リンクはどちらの配置にも対応します。
 
-公開 URL が決まったら sitemap.xml を生成します。
+公開 URL が決まったら sitemap.xml を生成します。初期公開では実際の GitHub ユーザー名とリポジトリ名を使います。
 
-    python3 scripts/make_sitemap.py https://example.com/tool/
+    python3 scripts/make_sitemap.py https://ACCOUNT.github.io/REPOSITORY/
 
 ## GA4
 
@@ -38,6 +40,8 @@ GA4 のウェブデータストリームを作り、assets/config.js の TOOL_LA
 イベントは tool_generate（3ツール）と tool_reveal（あみだくじの結果表示）で、tool_name パラメータにツール名を設定します。GA4 で tool_name をイベントスコープのカスタムディメンションとして登録すると、ツール別の集計に使えます。入力文字列・結果文字列は送信しません。
 
 Search Console には公開後にサイトの所有権を登録し、検索クエリ・表示回数・クリック数を確認します。サイトマップは公開 URL が決まってから追加します。
+
+調査ではツール別の閲覧数、利用回数、再訪、検索表示回数・クリック数を記録します。無広告の期間は売上が発生しないため、GA4 だけで黒字化を判断せず、収益化を検討する段階で広告収入等の見込みと運用費用を別途試算します。
 
 ## セキュリティ上の設計
 
