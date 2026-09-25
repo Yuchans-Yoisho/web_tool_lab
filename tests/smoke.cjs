@@ -13,14 +13,18 @@ class FakeElement {
     this.classes = new Set();
     this.classList = {
       add: (name) => this.classes.add(name),
-      remove: (name) => this.classes.delete(name)
+      remove: (name) => this.classes.delete(name),
+      contains: (name) => this.classes.has(name)
     };
   }
   addEventListener(name, handler) { this.handlers[name] = handler; }
   click() { assert.ok(this.handlers.click, "click handler"); this.handlers.click(); }
   replaceChildren() { this.children = []; }
-  append(child) { this.children.push(child); }
+  append(...children) { for (const child of children) { child.parent = this; this.children.push(child); } }
   setAttribute(name, value) { this.attributes[name] = value; }
+  getAttribute(name) { return this.attributes[name]; }
+  closest(selector) { return selector === ".ladder-slot" && this.className === "ladder-slot" ? this : this.parent?.closest(selector) ?? null; }
+  focus() { this.focused = true; }
   removeAttribute(name) { delete this.attributes[name]; }
   cloneNode(deep) {
     const copy = new FakeElement();
@@ -32,6 +36,7 @@ class FakeElement {
   }
 }
 
+let pointerTarget = null;
 const ids = new Map();
 const get = (id) => {
   if (!ids.has(id)) ids.set(id, new FakeElement());
@@ -47,7 +52,7 @@ const frames = [];
 const timers = [];
 const randomValues = [0, 50]; // 最初の抽選は候補0、演出は「最後にひとつ進む」
 const context = {
-  document: { getElementById: get, createElement: () => new FakeElement(), createElementNS: () => new FakeElement() },
+  document: { getElementById: get, createElement: () => new FakeElement(), createElementNS: () => new FakeElement(), elementFromPoint: () => pointerTarget },
   crypto: { getRandomValues: (values) => { values[0] = randomValues.shift() ?? 0; return values; } },
   window: {
     trackToolEvent: (tool, action) => events.push([tool, action]),
@@ -121,57 +126,68 @@ assert.equal(get("wheel").style.transition, "none");
 assert.ok(["A", "B"].includes(get("roulette-result").textContent));
 
 assert.equal(get("ladder").children.filter((x) => x.attributes.class === "ladder-line").length, 3, "three lines appear on load");
-assert.equal(get("amidaku-build").disabled, true);
-get("amidaku-names").value = "A\nB\nC";
-get("amidaku-prizes").value = "甲\n乙\n丙";
-get("amidaku-apply-names").click();
-assert.equal(get("amidaku-name-order").children.length, 3);
-assert.equal(get("ladder-cover").hidden, true, "one applied list does not show the cover");
-const firstName = get("ladder").children[1].textContent;
-get("amidaku-name-order").children[0].children[2].click();
-assert.notEqual(get("ladder").children[1].textContent, firstName, "participant positions can be changed");
-get("amidaku-apply-prizes").click();
-assert.equal(get("ladder-cover").hidden, false, "both lists show the cover");
-assert.equal(get("amidaku-build").disabled, false);
+assert.equal(get("amidaku-name-slots").children.length, 3);
+assert.equal(get("amidaku-prize-slots").children[0].children[0].value, "当たり");
+assert.equal(get("amidaku-prize-slots").children[1].children[0].value, "はずれ");
+assert.equal(get("ladder-cover").hidden, undefined, "cover starts visible");
+get("amidaku-name-slots").children[2].children[0].value = "田中";
+get("amidaku-name-slots").children[2].children[0].handlers.input();
+get("amidaku-count").value = "5";
+get("amidaku-count").handlers.change();
+assert.equal(get("amidaku-name-slots").children.length, 5);
+assert.equal(get("amidaku-prize-slots").children[4].children[0].value, "はずれ");
+get("amidaku-count").value = "3";
+get("amidaku-count").handlers.change();
+assert.equal(get("amidaku-name-slots").children[2].children[0].value, "田中", "edited name is preserved on shrink");
+assert.equal(get("amidaku-prize-slots").children[0].children[0].value, "当たり");
+get("amidaku-prize-slots").children[2].children[0].value = "景品";
+get("amidaku-prize-slots").children[2].children[0].handlers.input();
+get("amidaku-count").value = "2";
+get("amidaku-count").handlers.change();
+assert.equal(get("amidaku-name-slots").children[1].children[0].value, "田中", "unedited loss is removed first");
+assert.equal(get("amidaku-prize-slots").children[1].children[0].value, "景品", "edited result is preserved");
+get("amidaku-count").value = "3";
+get("amidaku-count").handlers.change();
+assert.equal(get("amidaku-prize-slots").children[2].children[0].value, "はずれ", "a new line gets a default loss");
+get("amidaku-prize-slots").children[1].children[0].value = "はずれ";
+get("amidaku-prize-slots").children[1].children[0].handlers.input();
+const firstName = get("amidaku-name-slots").children[0].children[0].value;
+const dragHandle = get("amidaku-name-slots").children[0].children[1];
+pointerTarget = get("amidaku-name-slots").children[1].children[0];
+dragHandle.handlers.pointerdown({ preventDefault() {}, pointerId: 1 });
+dragHandle.handlers.pointerup({ clientX: 0, clientY: 0 });
+assert.equal(get("amidaku-name-slots").children[1].children[0].value, firstName, "drag swaps participants");
+const keyboardHandle = get("amidaku-prize-slots").children[0].children[1];
+keyboardHandle.handlers.keydown({ key: "ArrowRight", preventDefault() {} });
+assert.equal(get("amidaku-prize-slots").children[1].children[0].value, "当たり", "keyboard can move results");
+assert.equal(get("amidaku-prize-slots").children[0].children[0].value, "はずれ");
 get("amidaku-build").click();
 assert.equal(get("ladder-cover").hidden, false, "rungs stay covered after generation");
 assert.equal(get("amidaku-reveal").disabled, false);
 get("amidaku-reveal").click();
-assert.equal(get("ladder-cover").hidden, false, "cover remains while reveal animation runs");
 assert.equal(get("amidaku-buttons").children.length, 0);
 advanceAnimation();
 assert.equal(get("ladder-cover").hidden, true);
 assert.equal(get("amidaku-buttons").children.length, 3);
-get("amidaku-buttons").children[0].click();
-assert.match(get("amidaku-result").textContent, / → (甲|乙|丙)$/);
-assert.ok(get("ladder").children.some((x) => x.attributes.class === "ladder-highlight"));
 const assignments = new Set();
 for (const button of get("amidaku-buttons").children) {
   button.click();
   assignments.add(get("amidaku-result").textContent.split(" → ")[1]);
 }
-assert.equal(assignments.size, 3, "each result is assigned once");
+assert.equal(assignments.size, 2, "the default results contain one win and two losses");
+assert.ok(get("ladder").children.some((x) => x.attributes.class === "ladder-highlight"));
 get("amidaku-count").value = "8";
 get("amidaku-count").handlers.change();
-assert.equal(get("ladder").children.filter((x) => x.attributes.class === "ladder-line").length, 8, "changing count redraws the lines");
-assert.equal(get("amidaku-build").disabled, true);
-get("amidaku-names").value = "A\nB\nC";
-get("amidaku-apply-names").click();
-assert.match(get("amidaku-error").textContent, /8件/);
-get("amidaku-names").value = Array.from({ length: 8 }, (_, i) => "N" + i).join("\n");
-get("amidaku-prizes").value = Array.from({ length: 8 }, (_, i) => "P" + i).join("\n");
-get("amidaku-apply-names").click();
-get("amidaku-apply-prizes").click();
-assert.equal(get("amidaku-error").textContent, "");
+assert.equal(get("ladder").children.filter((x) => x.attributes.class === "ladder-line").length, 8);
+assert.equal(get("amidaku-prize-slots").children.filter((slot) => slot.children[0].value === "当たり").length, 1);
 get("amidaku-build").click();
 get("amidaku-reveal").click();
 advanceAnimation();
-const eightResults = new Set();
-for (const button of get("amidaku-buttons").children) {
-  button.click();
-  eightResults.add(get("amidaku-result").textContent.split(" → ")[1]);
-}
-assert.equal(eightResults.size, 8, "all eight results are assigned once");
+assert.equal(get("amidaku-buttons").children.length, 8);
+get("amidaku-name-slots").children[0].children[0].value = "";
+get("amidaku-name-slots").children[0].children[0].handlers.input();
+assert.equal(get("amidaku-build").disabled, true, "empty inline input blocks generation");
+assert.equal(get("ladder-cover").hidden, false, "editing after reveal restores cover");
 
 get("dice-count").value = "10";
 get("dice-roll").click();

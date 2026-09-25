@@ -194,27 +194,35 @@
     } catch (error) { showError("roulette-error", error.message); }
   });
 
-  const ladderState = { count: 3, names: null, prizes: null, rungs: null, revealed: false };
+  const ladderState = {
+    count: 3,
+    names: Array.from({ length: 3 }, (_, i) => ({ value: "参加者" + (i + 1), edited: false })),
+    prizes: [{ value: "当たり", edited: false }, { value: "はずれ", edited: false }, { value: "はずれ", edited: false }],
+    rungs: null,
+    revealed: false
+  };
   let ladderRevealTimer = null;
-  const xAt = (column) => 75 + column * 100;
-  const yAt = (row) => 100 + row * 29;
+  const ladderWidth = 1000;
+  const ladderHeight = 420;
+  const ladderX = (column) => ladderWidth * (column + .5) / ladderState.count;
+  const ladderY = (row, total) => 28 + (row + 1) * (ladderHeight - 56) / (total + 1);
 
   function ladderPath(start, rungs) {
     let column = start;
-    const points = [[xAt(column), 100]];
+    const points = [[ladderX(column), 0]];
     rungs.forEach((row, index) => {
-      const y = yAt(index + 1);
-      points.push([xAt(column), y]);
+      const y = ladderY(index, rungs.length);
+      points.push([ladderX(column), y]);
       if (row.includes(column)) column += 1;
       else if (row.includes(column - 1)) column -= 1;
-      points.push([xAt(column), y]);
+      points.push([ladderX(column), y]);
     });
-    points.push([xAt(column), yAt(rungs.length + 2)]);
+    points.push([ladderX(column), ladderHeight]);
     return { column, points };
   }
 
   function buildRungs(count) {
-    // 先に一様な順列を作ることで、各参加者の行き先を等確率にする。
+    // 一様な順列を先に選び、どの参加者も各結果に等確率で着くようにする。
     const target = Array.from({ length: count }, (_, i) => i);
     for (let i = count - 1; i > 0; i--) {
       const j = randomInt(i + 1);
@@ -230,7 +238,7 @@
         current--;
       }
     }
-    // 2回続く横線は行き先を変えず、道筋だけ増やす。
+    // 往復する横線は割り当てを変えず、見た目の道筋を増やす。
     for (let i = 0; i < Math.floor(count / 2); i++) {
       const col = randomInt(count - 1);
       rungs.push([col], [col]);
@@ -238,60 +246,43 @@
     return rungs;
   }
 
-  function shuffled(items) {
-    const result = [...items];
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = randomInt(i + 1);
-      [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-  }
-
-  function ladderEntries(value, label) {
-    const entries = value.split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean);
-    if (entries.length !== ladderState.count) throw new Error(label + "を" + ladderState.count + "件入力してください。");
-    if (entries.some((entry) => Array.from(entry).length > 40)) throw new Error("各行は40文字以内にしてください。");
-    return entries;
-  }
-
   function drawLadder(selected = -1) {
-    const { count, names, prizes, rungs } = ladderState;
     const svg = $("ladder");
     svg.replaceChildren();
-    const width = Math.max(320, 150 + (count - 1) * 100);
-    const height = yAt(Math.max(8, rungs?.length ?? 0) + 2) + 58;
-    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
-    svg.setAttribute("width", width);
-    svg.setAttribute("height", height);
-    const stage = $("ladder-stage");
-    stage.style.width = width + "px";
-    stage.style.height = height + "px";
-    for (let i = 0; i < count; i++) {
-      const line = element("line", { x1: xAt(i), y1: 100, x2: xAt(i), y2: height - 58, class: "ladder-line" });
-      svg.append(line);
-      for (const [label, y] of [[names?.[i] ?? String(i + 1), 55], [prizes?.[i] ?? String(i + 1), height - 20]]) {
-        const t = element("text", { x: xAt(i), y, "text-anchor": "middle", class: "ladder-label" });
-        t.textContent = shortLabel(label, 8);
-        svg.append(t);
-      }
+    svg.setAttribute("viewBox", "0 0 " + ladderWidth + " " + ladderHeight);
+    for (let i = 0; i < ladderState.count; i++) {
+      svg.append(element("line", {
+        x1: ladderX(i), y1: 0, x2: ladderX(i), y2: ladderHeight, class: "ladder-line"
+      }));
     }
-    rungs?.forEach((row, rowIndex) => row.forEach((col) => {
-      svg.append(element("line", { x1: xAt(col), y1: yAt(rowIndex + 1), x2: xAt(col + 1), y2: yAt(rowIndex + 1), class: "ladder-line" }));
+    ladderState.rungs?.forEach((row, index) => row.forEach((col) => {
+      const y = ladderY(index, ladderState.rungs.length);
+      svg.append(element("line", {
+        x1: ladderX(col), y1: y, x2: ladderX(col + 1), y2: y, class: "ladder-line"
+      }));
     }));
-    if (selected >= 0 && rungs) {
-      const { points } = ladderPath(selected, rungs);
-      svg.append(element("polyline", { points: points.map((p) => p.join(",")).join(" "), class: "ladder-highlight" }));
+    if (selected >= 0 && ladderState.rungs) {
+      const { points } = ladderPath(selected, ladderState.rungs);
+      svg.append(element("polyline", {
+        points: points.map((point) => point.join(",")).join(" "), class: "ladder-highlight"
+      }));
     }
+  }
+
+  function ladderReady() {
+    return [...ladderState.names, ...ladderState.prizes].every((entry) => {
+      const length = Array.from(entry.value.trim()).length;
+      return length > 0 && length <= 40;
+    });
   }
 
   function updateLadderControls() {
-    const ready = !!(ladderState.names && ladderState.prizes);
-    const cover = $("ladder-cover");
-    cover.hidden = !ready || ladderState.revealed;
-    if (!ready || !ladderState.rungs) cover.classList.remove("opening");
+    const ready = ladderReady();
     $("amidaku-build").disabled = !ready || !!ladderState.rungs;
     $("amidaku-reveal").disabled = !ladderState.rungs || ladderState.revealed;
     if (!ladderState.rungs) $("amidaku-buttons").replaceChildren();
+    if (!ready) showError("amidaku-error", "各ラインの参加者と結果を入力してください（各40文字以内）。");
+    else showError("amidaku-error", "");
   }
 
   function resetLadderBuild() {
@@ -299,78 +290,131 @@
     ladderRevealTimer = null;
     ladderState.rungs = null;
     ladderState.revealed = false;
+    const cover = $("ladder-cover");
+    cover.hidden = false;
+    cover.classList.remove("opening");
     $("amidaku-result").textContent = "準備ができたら、あみだを作ろう";
     drawLadder();
     updateLadderControls();
   }
 
-  function renderNameOrder() {
-    const container = $("amidaku-name-order");
+  function swapLadderEntries(kind, first, second) {
+    if (second < 0 || second >= ladderState.count || first === second) return;
+    const entries = ladderState[kind];
+    [entries[first], entries[second]] = [entries[second], entries[first]];
+    renderLadderSlots(kind);
+    resetLadderBuild();
+  }
+
+  function slotAtPointer(event, kind) {
+    const slot = document.elementFromPoint(event.clientX, event.clientY)?.closest(".ladder-slot");
+    return slot?.getAttribute("data-kind") === kind ? Number(slot.getAttribute("data-index")) : -1;
+  }
+
+  function renderLadderSlots(kind) {
+    const container = $(kind === "names" ? "amidaku-name-slots" : "amidaku-prize-slots");
     container.replaceChildren();
-    if (!ladderState.names) return;
-    ladderState.names.forEach((name, index) => {
-      const row = document.createElement("div");
-      row.className = "ladder-order-row";
-      const label = document.createElement("span");
-      label.textContent = (index + 1) + "番: " + name;
-      row.append(label);
-      for (const [text, step] of [["←", -1], ["→", 1]]) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = text;
-        button.setAttribute("aria-label", name + "を" + (step < 0 ? "左" : "右") + "へ移動");
-        button.disabled = index + step < 0 || index + step >= ladderState.count;
-        button.addEventListener("click", () => {
-          [ladderState.names[index], ladderState.names[index + step]] =
-            [ladderState.names[index + step], ladderState.names[index]];
-          renderNameOrder();
-          resetLadderBuild();
-        });
-        row.append(button);
-      }
-      container.append(row);
+    container.style.gridTemplateColumns = "repeat(" + ladderState.count + ",minmax(0,1fr))";
+    ladderState[kind].forEach((entry, index) => {
+      const slot = document.createElement("div");
+      slot.className = "ladder-slot";
+      slot.setAttribute("data-kind", kind);
+      slot.setAttribute("data-index", index);
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = entry.value;
+      input.maxLength = 40;
+      input.setAttribute("aria-label", (kind === "names" ? "参加者" : "結果") + " " + (index + 1));
+      input.addEventListener("input", () => {
+        entry.value = input.value;
+        entry.edited = true;
+        resetLadderBuild();
+      });
+      const handle = document.createElement("button");
+      handle.type = "button";
+      handle.className = "ladder-drag";
+      handle.textContent = "⠿";
+      handle.setAttribute("aria-label", entry.value + "の位置をドラッグで変更。左右矢印キーでも移動できます");
+      handle.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        handle.setPointerCapture?.(event.pointerId);
+        slot.classList.add("dragging");
+      });
+      handle.addEventListener("pointermove", (event) => {
+        if (!slot.classList.contains("dragging")) return;
+        for (const sibling of container.children) sibling.classList.remove("drop-target");
+        const target = slotAtPointer(event, kind);
+        if (target >= 0 && target !== index) container.children[target].classList.add("drop-target");
+      });
+      handle.addEventListener("pointerup", (event) => {
+        if (!slot.classList.contains("dragging")) return;
+        const target = slotAtPointer(event, kind);
+        slot.classList.remove("dragging");
+        for (const sibling of container.children) sibling.classList.remove("drop-target");
+        swapLadderEntries(kind, index, target);
+      });
+      handle.addEventListener("pointercancel", () => {
+        slot.classList.remove("dragging");
+        for (const sibling of container.children) sibling.classList.remove("drop-target");
+      });
+      handle.addEventListener("keydown", (event) => {
+        const step = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        const target = index + step;
+        swapLadderEntries(kind, index, target);
+        container.children[target]?.children[1]?.focus();
+      });
+      slot.append(input, handle);
+      container.append(slot);
     });
+  }
+
+  function removalPriority(index) {
+    const name = ladderState.names[index];
+    const prize = ladderState.prizes[index];
+    if (prize.value.trim() === "はずれ" && !prize.edited && !name.edited) return 0;
+    if (prize.value.trim() === "はずれ" && !prize.edited) return 1;
+    if (prize.value.trim() === "はずれ") return 2;
+    if (prize.value.trim() === "当たり") return 5;
+    return prize.edited || name.edited ? 4 : 3;
+  }
+
+  function resizeLadder(count) {
+    while (ladderState.count < count) {
+      let number = 1;
+      while (ladderState.names.some((entry) => entry.value === "参加者" + number)) number++;
+      ladderState.names.push({ value: "参加者" + number, edited: false });
+      ladderState.prizes.push({ value: "はずれ", edited: false });
+      ladderState.count++;
+    }
+    while (ladderState.count > count) {
+      const indices = Array.from({ length: ladderState.count }, (_, i) => i);
+      indices.sort((a, b) => removalPriority(a) - removalPriority(b) || b - a);
+      const remove = indices[0];
+      ladderState.names.splice(remove, 1);
+      ladderState.prizes.splice(remove, 1);
+      ladderState.count--;
+    }
+    renderLadderSlots("names");
+    renderLadderSlots("prizes");
+    resetLadderBuild();
   }
 
   const ladderCount = $("amidaku-count");
   if (ladderCount) {
+    renderLadderSlots("names");
+    renderLadderSlots("prizes");
     drawLadder();
     updateLadderControls();
     ladderCount.addEventListener("change", () => {
       const count = Number(ladderCount.value);
-      if (!Number.isInteger(count) || count < 2 || count > 8) return;
-      ladderState.count = count;
-      ladderState.names = null;
-      ladderState.prizes = null;
-      $("amidaku-name-order").replaceChildren();
-      showError("amidaku-error", "");
-      resetLadderBuild();
+      if (Number.isInteger(count) && count >= 2 && count <= 8) resizeLadder(count);
     });
-    for (const [field, key] of [["amidaku-names", "names"], ["amidaku-prizes", "prizes"]]) {
-      $(field).addEventListener("input", () => {
-        ladderState[key] = null;
-        if (key === "names") $("amidaku-name-order").replaceChildren();
-        showError("amidaku-error", "");
-        resetLadderBuild();
-      });
-    }
-    for (const [buttonId, fieldId, key, label] of [
-      ["amidaku-apply-names", "amidaku-names", "names", "参加者"],
-      ["amidaku-apply-prizes", "amidaku-prizes", "prizes", "結果"]
-    ]) {
-      $(buttonId).addEventListener("click", () => {
-        try {
-          ladderState[key] = shuffled(ladderEntries($(fieldId).value, label));
-          showError("amidaku-error", "");
-          if (key === "names") renderNameOrder();
-          resetLadderBuild();
-        } catch (error) { showError("amidaku-error", error.message); }
-      });
-    }
   }
 
   $("amidaku-build")?.addEventListener("click", () => {
-    if (!ladderState.names || !ladderState.prizes || ladderState.rungs) return;
+    if (!ladderReady() || ladderState.rungs) return;
     ladderState.rungs = buildRungs(ladderState.count);
     drawLadder();
     updateLadderControls();
@@ -394,11 +438,11 @@
         const button = document.createElement("button");
         button.type = "button";
         button.className = "choice-button";
-        button.textContent = name;
+        button.textContent = name.value;
         button.addEventListener("click", () => {
           drawLadder(index);
           const result = ladderPath(index, ladderState.rungs).column;
-          $("amidaku-result").textContent = name + " → " + ladderState.prizes[result];
+          $("amidaku-result").textContent = name.value + " → " + ladderState.prizes[result].value;
           window.trackToolEvent("amidaku", "reveal");
         });
         buttons.append(button);
