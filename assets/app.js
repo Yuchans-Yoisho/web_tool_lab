@@ -91,6 +91,7 @@
       const choice = randomInt(items.length);
       const motion = $("roulette-motion").checked;
       const effect = motion && $("roulette-effects").checked ? randomRouletteEffect() : -1;
+      if (window.innerWidth <= 760) $("wheel-wrap").scrollIntoView({ behavior: "smooth", block: "center" });
       const wheel = $("wheel");
       const burst = $("roulette-burst");
       wheel.style.visibility = "";
